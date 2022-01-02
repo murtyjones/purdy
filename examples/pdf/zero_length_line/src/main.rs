@@ -110,14 +110,11 @@ fn main() {
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
 
-    // Build a Path for the rust logo.
     let mut builder = Path::builder().with_svg();
-    let commands = Commands::new(vec![
-        Command::MoveTo(10.0, 10.0),
-        Command::LineTo(20.0, 20.0),
-        Command::Fill,
-    ]);
-    build_graphics(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, commands, &mut builder);
+    builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
+    builder.move_to(point(10.0, 10.0));
+    builder.line_to(point(20.0, 20.0));
+    builder.close();
     let path = builder.build();
 
     fill_tess
