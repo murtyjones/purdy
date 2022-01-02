@@ -11,6 +11,9 @@ use std::io::Write;
 mod build_line;
 use build_line::*;
 
+mod commands;
+use commands::*;
+
 // For create_buffer_init()
 use wgpu::util::DeviceExt;
 
@@ -109,7 +112,12 @@ fn main() {
 
     // Build a Path for the rust logo.
     let mut builder = Path::builder().with_svg();
-    build_line(&mut builder);
+    let commands = Commands::new(vec![
+        Command::MoveTo(10.0, 10.0),
+        Command::LineTo(20.0, 20.0),
+        Command::Fill,
+    ]);
+    build_graphics(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, commands, &mut builder);
     let path = builder.build();
 
     fill_tess
@@ -122,13 +130,13 @@ fn main() {
 
     let fill_range = 0..(geometry.indices.len() as u32);
 
-    stroke_tess
-        .tessellate_path(
-            &path,
-            &StrokeOptions::tolerance(tolerance),
-            &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
-        )
-        .unwrap();
+    // stroke_tess
+    //     .tessellate_path(
+    //         &path,
+    //         &StrokeOptions::tolerance(tolerance),
+    //         &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
+    //     )
+    //     .unwrap();
 
     let stroke_range = fill_range.end..(geometry.indices.len() as u32);
 
