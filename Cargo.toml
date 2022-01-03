@@ -13,7 +13,8 @@ members = [
     "examples/wgpu_svg",
     "bench/tess",
     "bench/path",
-    "bench/geom"
+    "bench/geom",
+    "examples/pdf/zero_length_line",
 ]
 
 exclude = [
