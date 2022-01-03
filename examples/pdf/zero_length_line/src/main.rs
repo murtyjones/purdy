@@ -22,8 +22,9 @@ use std::num::NonZeroU32;
 use std::ops::Rem;
 use std::time::{Duration, Instant};
 
-const OUTPUT: &'static str = "img/line.png";
 const PRIM_BUFFER_LEN: usize = 256;
+
+const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
 
 #[repr(C)]
 #[derive(Copy, Clone)]
