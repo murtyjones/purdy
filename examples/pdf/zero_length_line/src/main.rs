@@ -102,7 +102,7 @@ fn main() {
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
 
-    let mut builder = Path::builder().with_svg();
+    let mut builder = Path::builder().with_pdf();
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(10.0, 10.0));
     builder.line_to(point(10.0, 20.0));
