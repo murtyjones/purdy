@@ -114,7 +114,7 @@ fn main() {
     let mut builder = Path::builder().with_svg();
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(10.0, 10.0));
-    builder.line_to(point(20.0, 20.0));
+    builder.line_to(point(10.0, 20.0));
     builder.close();
     let path = builder.build();
 
