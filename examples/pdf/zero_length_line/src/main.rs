@@ -1,26 +1,17 @@
 use lyon::geom::Box2D;
 use lyon::math::*;
-use lyon::path::iterator::PathIterator;
 use lyon::path::Path;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
+use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
-use lyon::tessellation::{StrokeOptions, StrokeTessellator};
 use std::io::Write;
-
-mod build_line;
-use build_line::*;
-
-mod commands;
-use commands::*;
 
 // For create_buffer_init()
 use wgpu::util::DeviceExt;
 
 use futures::executor::block_on;
 use std::num::NonZeroU32;
-use std::ops::Rem;
-use std::time::{Duration, Instant};
 
 const PRIM_BUFFER_LEN: usize = 256;
 
