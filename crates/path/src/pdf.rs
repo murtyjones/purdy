@@ -104,6 +104,21 @@ impl Pdf {
         self.end(true)
     }
 
+    fn make_fillable_if_needed(&mut self) {
+        // Make the sole LineTo a fillable entity to keep it matching the PDF spec
+        // TODO: Need to make this work with any single LineTo instance
+        // TODO: Need to find a more appropriate place for this logic to live (probably need a WithPDF structure)
+        // TODO: Once above TODOs are done, need to post in the lyon repo and ask whether there's a better place to do this
+        // [(0.0, 792.0), (10.0, 10.0), (10.0, 20.0)]
+        // line from bottom left to bottom right
+        self.points.insert(3, Point::new(11.0, 20.0));
+        // line from bottom right to top right
+        self.points.insert(4, Point::new(11.0, 10.0));
+        // [Begin, End, Begin, LineTo, Close]
+        self.verbs.insert(4, Verb::LineTo);
+        self.verbs.insert(5, Verb::LineTo);
+    }
+
 }
 
 impl Build for Pdf {
@@ -114,29 +129,11 @@ impl Build for Pdf {
         self.end_if_needed();
         // TODO: Implement validator
         // self.validator.build();
-
-        // TODO: Delete these
-        let mut new_points = self.points;
-        let mut new_verbs = self.verbs;
-
-        // Make the sole LineTo a fillable entity to keep it matching the PDF spec
-        // TODO: Need to make this work with any single LineTo instance
-        // TODO: Need to find a more appropriate place for this logic to live (probably need a WithPDF structure)
-        // TODO: Once above TODOs are done, need to post in the lyon repo and ask whether there's a better place to do this
-        // [(0.0, 792.0), (10.0, 10.0), (10.0, 20.0)]
-        // line from bottom left to bottom right
-        new_points.insert(3, Point::new(11.0, 20.0));
-        // line from bottom right to top right
-        new_points.insert(4, Point::new(11.0, 10.0));
-        // [Begin, End, Begin, LineTo, Close]
-        new_verbs.insert(4, Verb::LineTo);
-        new_verbs.insert(5, Verb::LineTo);
+        self.make_fillable_if_needed();
 
         Path {
-            // TODO: Convert new_points back to self.points
-            points: new_points.into_boxed_slice(),
-            // TODO: Convert new_points back to self.points
-            verbs: new_verbs.into_boxed_slice(),
+            points: self.points.into_boxed_slice(),
+            verbs: self.verbs.into_boxed_slice(),
             num_attributes: 0,
         }
     }
