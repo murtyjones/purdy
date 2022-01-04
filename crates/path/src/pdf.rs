@@ -141,3 +141,14 @@ impl Build for Pdf {
         }
     }
 }
+
+// TODO: Make real
+// #[test]
+// fn simple_path() {
+//     let mut builder = Pdf::new();
+//     builder.move_to(point(100.0, 100.0));
+//     builder.close();
+//     let path = builder.build();
+
+//     panic!("{:?}", path);
+// }
