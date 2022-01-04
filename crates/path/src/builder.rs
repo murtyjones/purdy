@@ -1586,7 +1586,7 @@ fn add_rounded_rectangle<Builder: PathBuilder>(
 }
 
 #[inline]
-fn nan_check(p: Point) {
+pub fn nan_check(p: Point) {
     debug_assert!(p.x.is_finite());
     debug_assert!(p.y.is_finite());
 }

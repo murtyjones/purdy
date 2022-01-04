@@ -53,6 +53,7 @@ pub mod iterator;
 pub mod path;
 pub mod path_buffer;
 pub mod polygon;
+pub mod pdf;
 
 #[doc(hidden)]
 pub mod private;
