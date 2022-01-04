@@ -1,6 +1,7 @@
 use lyon::geom::Box2D;
 use lyon::math::*;
 use lyon::path::Path;
+use lyon::path::pdf::Pdf;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
@@ -102,11 +103,14 @@ fn main() {
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
 
-    let mut builder = Path::builder().with_pdf();
+    let mut builder = Pdf::new(
+        // TODO: Pass page params
+    );
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(10.0, 10.0));
     builder.line_to(point(10.0, 20.0));
     builder.close();
+    use lyon::path::builder::Build;
     let path = builder.build();
 
     fill_tess

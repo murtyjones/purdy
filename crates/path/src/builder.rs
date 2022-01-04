@@ -84,7 +84,6 @@ use crate::geom::{traits::Transformation, Arc, ArcFlags, LineSegment, SvgArc};
 use crate::math::*;
 use crate::path::Verb;
 use crate::polygon::Polygon;
-use crate::with_pdf::WithPdf;
 use crate::{EndpointId, Winding, Attributes};
 
 use std::iter::IntoIterator;
@@ -338,17 +337,6 @@ impl<B: PathBuilder> NoAttributes<B> {
         B: Sized,
     {
         WithSvg::new(self.inner)
-    }
-
-    /// Returns a builder that support PDF commands.
-    ///
-    /// This must be called before starting to add any sub-path.
-    #[inline]
-    pub fn with_pdf(self) -> WithPdf<B>
-    where
-        B: Sized,
-    {
-        WithPdf::new(self.inner)
     }
 
     /// Builds a path object, consuming the builder.
@@ -686,16 +674,6 @@ pub trait PathBuilder {
         Self: Sized,
     {
         WithSvg::new(self)
-    }
-
-    /// Returns a builder that support PDF commands.
-    ///
-    /// This must be called before starting to add any sub-path.
-    fn with_pdf(self) -> WithPdf<Self>
-    where
-        Self: Sized,
-    {
-        WithPdf::new(self)
     }
 }
 
