@@ -1,5 +1,5 @@
 use crate::scalar::{Float, Scalar};
-use crate::{vector, Point, Vector};
+use crate::{vector, Point, Vector, point};
 use arrayvec::ArrayVec;
 
 #[inline]
@@ -126,6 +126,14 @@ pub fn cubic_polynomial_roots<S: Scalar>(a: S, b: S, c: S, d: S) -> ArrayVec<S, 
     result
 }
 
+#[inline]
+pub fn get_pythagorean_hypotenuse<S: Scalar>(p1: Point<S>, p2: Point<S>) -> S {
+    let a_squared = (p1.y - p2.y).abs().powi(2);
+    let b_squared = (p1.x - p2.x).abs().powi(2);
+    let c_squared = a_squared + b_squared;
+    c_squared.sqrt()
+}
+
 #[test]
 fn cubic_polynomial() {
     fn assert_approx_eq(a: ArrayVec<f32, 3>, b: &[f32], epsilon: f32) {
@@ -174,4 +182,12 @@ fn cubic_polynomial() {
 
     // Constant.
     assert_approx_eq(cubic_polynomial_roots(0.0, 0.0, 0.0, 0.0), &[], 0.00005);
+}
+
+
+#[test]
+fn test_pythagorean() {
+    let c = get_pythagorean_hypotenuse(point(16.0, 12.0), point(0.0, 0.0));
+    // normally `c` isn't so nice and round but I picked pathological inputs above
+    assert_eq!(c, 20.0);
 }

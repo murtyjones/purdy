@@ -1,3 +1,5 @@
+use lyon_geom::LineSegment;
+
 use crate::{math::{Point, point}, path::Verb, EndpointId, Path, Attributes, builder::nan_check, traits::Build};
 
 pub struct Pdf {
@@ -104,19 +106,22 @@ impl Pdf {
         self.end(true)
     }
 
+    /// For any single lines ending with a fill, makes them rectangles that can be filled
     fn make_fillable_if_needed(&mut self) {
-        // Make the sole LineTo a fillable entity to keep it matching the PDF spec
-        // TODO: Need to make this work with any single LineTo instance
-        // TODO: Need to find a more appropriate place for this logic to live (probably need a WithPDF structure)
-        // TODO: Once above TODOs are done, need to post in the lyon repo and ask whether there's a better place to do this
+        // TODO: Need to make this dynamic to work with any number of lines
         // [(0.0, 792.0), (10.0, 10.0), (10.0, 20.0)]
-        // line from bottom left to bottom right
-        self.points.insert(3, Point::new(11.0, 20.0));
-        // line from bottom right to top right
-        self.points.insert(4, Point::new(11.0, 10.0));
         // [Begin, End, Begin, LineTo, Close]
         self.verbs.insert(4, Verb::LineTo);
         self.verbs.insert(5, Verb::LineTo);
+
+        let from = *self.points.get(1).unwrap();
+        let to = *self.points.get(2).unwrap();
+        let line = LineSegment { from, to };
+        let rect_points = line.as_rect();
+        self.points[1] = rect_points[0];
+        self.points[2] = rect_points[1];
+        self.points.push(rect_points[2]);
+        self.points.push(rect_points[3]);
     }
 
 }

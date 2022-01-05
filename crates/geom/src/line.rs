@@ -2,8 +2,8 @@ use crate::monotonic::MonotonicSegment;
 use crate::scalar::Scalar;
 use crate::segment::{BoundingBox, Segment};
 use crate::traits::Transformation;
-use crate::utils::min_max;
-use crate::{point, vector, Point, Vector, Box2D};
+use crate::utils::{min_max, get_pythagorean_hypotenuse};
+use crate::{point, vector, Point, Vector, Box2D, Transform, Translation, Rotation};
 use std::mem::swap;
 
 use std::ops::Range;
@@ -432,6 +432,36 @@ impl<S: Scalar> LineSegment<S> {
     pub fn clipped(&self, clip: &Box2D<S>) -> Option<Self> {
         self.clipped_x(clip.x_range())?.clipped_y(clip.y_range())
     }
+
+    /// Converts the line to a simple, single-unit wide rect.
+    /// This is needed for PDF rendering in cases where there
+    /// exists a line followed by the fill command.
+    // TODO: Scaling might need to be handled
+    pub fn as_rect(&self) -> [Point<S>; 4] {
+        let fill_width = S::ONE;
+        let x_mid = (self.from.x + self.to.x) / S::TWO;
+        let y_mid = (self.from.y + self.to.y) / S::TWO;
+        let hypotenuse = get_pythagorean_hypotenuse(self.from, self.to);
+        let p1 = point(-fill_width / S::TWO, hypotenuse / S::TWO);
+        let p2 = point(fill_width / S::TWO, hypotenuse / S::TWO);
+        let p3 = point(fill_width / S::TWO, -hypotenuse / S::TWO);
+        let p4 = point(-fill_width / S::TWO, -hypotenuse / S::TWO);
+        
+        let translation = Translation::new(x_mid, y_mid);
+        let p1 = translation.transform_point(p1);
+        let p2 = translation.transform_point(p2);
+        let p3 = translation.transform_point(p3);
+        let p4 = translation.transform_point(p4);
+        
+        let degrees = S::atan2(self.to.y - self.from.y, self.to.x - self.from.x).to_degrees() - S::NINETY;
+        let rotation = Rotation::new(Angle::degrees(degrees));
+        let p1 = rotation.transform_point(p1);
+        let p2 = rotation.transform_point(p2);
+        let p3 = rotation.transform_point(p3);
+        let p4 = rotation.transform_point(p4);
+
+        [p1, p2, p3, p4]
+    }
 }
 
 impl<S: Scalar> Segment for LineSegment<S> {
@@ -779,6 +809,7 @@ fn intersection_overlap() {
     assert!(l1.intersection(&l2).is_none());
 }
 
+use euclid::Angle;
 #[cfg(test)]
 use euclid::approxeq::ApproxEq;
 
