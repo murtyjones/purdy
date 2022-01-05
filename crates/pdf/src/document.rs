@@ -103,7 +103,10 @@ mod tests {
 
     #[test]
     fn test_sample_pdf_metadata() {
-		let bytes = read_file_bytes(concat!(env!("CARGO_WORKSPACE_DIR"), "/pdfs/sample/sample.pdf"));
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample/sample.pdf"
+        ));
         let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
         let pdf = Document::from_bytes(&bytes).expect("could not parse sample");
         assert_eq!(pdf.version, 1.3);
@@ -113,7 +116,10 @@ mod tests {
 
     #[test]
     fn test_sample_pdf_objects() {
-		let bytes = read_file_bytes(concat!(env!("CARGO_WORKSPACE_DIR"), "/pdfs/sample/sample.pdf"));
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample/sample.pdf"
+        ));
         let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
         let pdf = Document::from_bytes(&bytes).expect("could not parse sample");
         let mut expected_objects = sample_pdf_objects().into_iter();
@@ -127,7 +133,10 @@ mod tests {
 
     #[test]
     fn test_sample_pdf_no_xref_metadata() {
-		let bytes = read_file_bytes(concat!(env!("CARGO_WORKSPACE_DIR"), "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"));
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
+        ));
         let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
         let pdf = Document::from_bytes(&bytes).expect("could not parse sample");
         assert_eq!(pdf.version, 1.3);
@@ -136,7 +145,10 @@ mod tests {
 
     #[test]
     fn test_sample_pdf_no_xref_objects() {
-		let bytes = read_file_bytes(concat!(env!("CARGO_WORKSPACE_DIR"), "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"));
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
+        ));
         let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
         let pdf = Document::from_bytes(&bytes).expect("could not parse sample");
         let mut expected_objects = sample_no_xref_pdf_objects().into_iter();

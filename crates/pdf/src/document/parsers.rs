@@ -181,7 +181,7 @@ fn find_all_object_ids(input: &'static [u8]) -> Result<Vec<(ObjectId, usize)>> {
 }
 
 fn take_till_digit(input: &'static [u8]) -> ParseResult<&[u8]> {
-	take_till(is_digit)(input)
+    take_till(is_digit)(input)
 }
 
 fn assert_all_xref_entry_offsets_are_accurate<'a, 'b>(

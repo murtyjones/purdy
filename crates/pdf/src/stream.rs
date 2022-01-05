@@ -1,11 +1,7 @@
+use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom};
+use anyhow::Result;
 use lyon_geom::Point;
 use lyon_path::LineCap;
-use anyhow::Result;
-use crate::{
-    dictionary::Dictionary,
-    rgb::Rgb,
-    utils::strip_nom,
-};
 
 use self::parsers::stream_objects;
 

@@ -14,7 +14,7 @@ use nom::{
 };
 
 use crate::{
-    error::{ParseError as PdfParseError},
+    error::ParseError as PdfParseError,
     rgb::Rgb,
     utils::{_name, _real, int1, take_until_unmatched, ws},
     ParseResult,
@@ -77,7 +77,7 @@ fn cap_style(input: &[u8]) -> ParseResult<LineCap> {
         _ => {
             let e: PdfParseError = PdfParseError::InvalidCapStyle(e.into()).into();
             Err(e)
-        },
+        }
     })(input)
 }
 
