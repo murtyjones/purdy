@@ -7,6 +7,7 @@ members = [
     "crates/tess2",
     "crates/geom",
     "crates/extra",
+    "crates/pdf",
     "cli",
     "wasm_test",
     "examples/wgpu",

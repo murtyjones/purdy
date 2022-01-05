@@ -1,0 +1,4 @@
+# Don't want the images generated on the local machine to be committed to source
+*
+
+!.gitignore
