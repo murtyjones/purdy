@@ -149,6 +149,8 @@ mod scalar {
         const NINE: Self;
         const TEN: Self;
 
+        const NINETY: Self;
+
         const EPSILON: Self;
         const DIV_EPSILON: Self = Self::EPSILON;
 
@@ -173,6 +175,8 @@ mod scalar {
         const EIGHT: Self = 8.0;
         const NINE: Self = 9.0;
         const TEN: Self = 10.0;
+
+        const NINETY: Self = 90.0;
 
         const EPSILON: Self = 1e-4;
 
@@ -214,6 +218,8 @@ mod scalar {
         const EIGHT: Self = 8.0;
         const NINE: Self = 9.0;
         const TEN: Self = 10.0;
+        
+        const NINETY: Self = 90.0;
 
         const EPSILON: Self = 1e-8;
 
