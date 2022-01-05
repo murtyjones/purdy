@@ -103,6 +103,7 @@ mod tests {
 
     #[test]
     fn test_sample_pdf_metadata() {
+        panic!("{:?}", env!("CARGO_WORKSPACE_DIR"));
         let bytes = read_file_bytes(concat!(
             env!("CARGO_WORKSPACE_DIR"),
             "/pdfs/sample/sample.pdf"
