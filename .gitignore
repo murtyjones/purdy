@@ -30,6 +30,7 @@
 *.cps
 *.log
 *.pdf
+!pdfs/**/*.pdf
 *.epub
 *.html
 *.pg
