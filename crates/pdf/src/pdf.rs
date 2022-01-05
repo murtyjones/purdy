@@ -21,7 +21,7 @@ mod tests {
 
 	#[test]
 	fn sample_pdf() {
-		let pdf = read_file_bytes("pdfs/sample/sample.pdf");
+		let pdf = read_file_bytes(concat!(env!("CARGO_WORKSPACE_DIR"), "/pdfs/sample/sample.pdf"));
 		assert!(Pdf::from_bytes(&pdf).is_ok());
 	}
 }
