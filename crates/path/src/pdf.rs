@@ -281,9 +281,9 @@ mod test {
         assert_eq!(path.verbs, expected_verbs);
     }
 
-    /// Two single lines
+    /// Multiple lines
     #[test]
-    fn test_as_rect_two_lines() {
+    fn test_as_rect_multiple_lines() {
         let mut pdf = Pdf::new();
         pdf.points.append(&mut vec![
             // moveto
@@ -296,9 +296,13 @@ mod test {
             point(10.0, 10.0),
             // lineto
             point(10.0, 20.0),
+            // moveto
+            point(0.0, 0.0),
+            // lineto
+            point(10.0, 20.0),
         ]);
         pdf.verbs.append(&mut vec![
-            Begin, End, Begin, LineTo, End, Begin, LineTo, Close,
+            Begin, End, Begin, LineTo, End, Begin, LineTo, End, Begin, LineTo, Close,
         ]);
         let path = pdf.build();
 
@@ -309,22 +313,24 @@ mod test {
             point(9.5, 20.0),
             // lineto:
             point(10.5, 20.0),
-            // lineto:
             point(10.5, 10.0),
-            // lineto:
             point(9.5, 10.0),
             // moveto:
             point(9.5, 20.0),
             // lineto:
             point(10.5, 20.0),
-            // lineto:
             point(10.5, 10.0),
-            // lineto:
             point(9.5, 10.0),
+            // moveto
+            point(13.497057, 16.931812),
+            // lineto
+            point(14.391484, 16.484598),
+            point(4.3914857, -3.5154023),
+            point(3.4970584, -3.0681891),
         ]);
         assert_eq!(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
+            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
         ]);
         assert_eq!(path.verbs, expected_verbs);
     }
