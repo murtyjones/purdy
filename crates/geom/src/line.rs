@@ -439,14 +439,14 @@ impl<S: Scalar> LineSegment<S> {
     // TODO: Scaling might need to be handled
     pub fn as_rect(&self) -> [Point<S>; 4] {
         let fill_width = S::ONE;
-        let x_mid = (self.from.x + self.to.x) / S::TWO;
-        let y_mid = (self.from.y + self.to.y) / S::TWO;
         let hypotenuse = get_pythagorean_hypotenuse(self.from, self.to);
         let p1 = point(-fill_width / S::TWO, hypotenuse / S::TWO);
         let p2 = point(fill_width / S::TWO, hypotenuse / S::TWO);
         let p3 = point(fill_width / S::TWO, -hypotenuse / S::TWO);
         let p4 = point(-fill_width / S::TWO, -hypotenuse / S::TWO);
         
+        let x_mid = (self.from.x + self.to.x) / S::TWO;
+        let y_mid = (self.from.y + self.to.y) / S::TWO;
         let translation = Translation::new(x_mid, y_mid);
         let p1 = translation.transform_point(p1);
         let p2 = translation.transform_point(p2);
