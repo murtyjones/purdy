@@ -5,7 +5,7 @@ use crate::{
     traits::Build,
     Attributes, EndpointId, Path,
 };
-use lyon_geom::{LineSegment, euclid::{Point2D, UnknownUnit}};
+use lyon_geom::LineSegment;
 use std::convert::TryInto;
 
 pub struct Pdf {
@@ -131,7 +131,7 @@ impl Pdf {
                 None
             };
             if a == Verb::Begin && b == Verb::LineTo && (c == Verb::Close || c == Verb::End) {
-                // The next couple of .windows(3) calls will be `LineTo, Close/End, ???` and 
+                // The next couple of .windows(3) calls will be `LineTo, Close/End, ???` and
                 // `Close/End, ???, ???`. We can skip these two, and we must do so in order
                 // for our point iterator to work properly and not get ahead of itself
                 skip_next_n_windows += 2;
@@ -139,7 +139,10 @@ impl Pdf {
                 lineto_insertions.push(first_item_index + 2);
                 let (i, from) = maybe_from.unwrap();
                 let (j, to) = points.next().unwrap();
-                let line = LineSegment { from: *from, to: *to };
+                let line = LineSegment {
+                    from: *from,
+                    to: *to,
+                };
                 let rect_points = line.as_rect();
                 point_replacements.push((i, rect_points[0]));
                 point_replacements.push((j, rect_points[1]));
@@ -148,7 +151,6 @@ impl Pdf {
                 point_insertions.push((j + 1, rect_points[2]));
             }
         }
-
 
         for i in lineto_insertions.into_iter().rev() {
             self.verbs.insert(i, Verb::LineTo);
@@ -181,50 +183,59 @@ impl Build for Pdf {
     }
 }
 
-// TODO: Make real
-// #[test]
-// fn simple_path() {
-//     let mut builder = Pdf::new();
-//     builder.move_to(point(100.0, 100.0));
-//     builder.close();
-//     let path = builder.build();
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::path::Verb::*;
+    use lyon_geom::{
+        euclid::{Point2D, UnknownUnit},
+        LineSegment,
+    };
 
-//     panic!("{:?}", path);
-// }
+    #[test]
+    fn test_as_rect_single_line() {
+        let mut pdf = Pdf::new();
+        pdf.points.append(&mut vec![
+            point(0.0, 792.0),
+            point(10.0, 10.0),
+            point(10.0, 20.0),
+        ]);
+        pdf.verbs
+            .append(&mut vec![Begin, End, Begin, LineTo, Close]);
+        let path = pdf.build();
 
-#[test]
-fn test_as_rect() {
-    let mut pdf = Pdf::new();
-    pdf.points.append(&mut vec![
-        point(0.0, 792.0),
-        point(10.0, 10.0),
-        point(10.0, 20.0),
-    ]);
-    pdf.verbs.append(&mut vec![
-        Verb::Begin,
-        Verb::End,
-        Verb::Begin,
-        Verb::LineTo,
-        Verb::Close,
-    ]);
-    let path = pdf.build();
+        let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
+            point(0.0, 792.0),
+            point(9.5, 20.0),
+            point(10.5, 20.0),
+            point(10.5, 10.0),
+            point(9.5, 10.0),
+        ]);
+        assert_eq!(path.points, expected_points);
+        let expected_verbs: Box<[Verb]> =
+            Box::new([Begin, End, Begin, LineTo, LineTo, LineTo, Close]);
+        assert_eq!(path.verbs, expected_verbs);
+    }
 
-    let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
-        point(0.0, 792.0),
-        point(9.5, 20.0),
-        point(10.5, 20.0),
-        point(10.5, 10.0),
-        point(9.5, 10.0),
-    ]);
-    assert_eq!(path.points, expected_points);
-    let expected_verbs: Box<[Verb]> = Box::new([
-        Verb::Begin,
-        Verb::End,
-        Verb::Begin,
-        Verb::LineTo,
-        Verb::LineTo,
-        Verb::LineTo,
-        Verb::Close,
-    ]);
-    assert_eq!(path.verbs, expected_verbs);
+    #[test]
+    fn test_as_rect_two_lines() {
+        let mut pdf = Pdf::new();
+        pdf.points.append(&mut vec![
+            point(0.0, 792.0),
+            point(10.0, 10.0),
+            point(10.0, 20.0),
+            point(10.0, 10.0),
+            point(10.0, 20.0),
+        ]);
+        pdf.verbs.append(&mut vec![
+            Begin, End, Begin, LineTo, End, Begin, LineTo, Close,
+        ]);
+        let path = pdf.build();
+
+        assert_eq!(path.points.len(), 9);
+        let expected_verbs: Box<[Verb]> = Box::new([
+            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
+        ]);
+        assert_eq!(path.verbs, expected_verbs);
+    }
 }
