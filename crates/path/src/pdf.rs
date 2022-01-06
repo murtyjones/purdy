@@ -151,16 +151,22 @@ impl Pdf {
                 continue;
             }
             let [a, b, c]: [Verb; 3] = window.try_into().unwrap();
-            if a == Verb::CubicTo {
-                points.next();
-                points.next();
-                points.next();
-                continue;
-            }
-            let maybe_from = if a != Verb::Close && a != Verb::End {
-                points.next()
-            } else {
-                None
+            let maybe_from = match a {
+                Verb::Close | Verb::End => {
+                    None
+                }
+                Verb::CubicTo => {
+                    points.next();
+                    points.next();
+                    points.next();
+                    None
+                }
+                Verb::Begin | Verb::LineTo => {
+                    points.next()
+                }
+                Verb::QuadraticTo => {
+                    unimplemented!();
+                }
             };
             if a == Verb::Begin && b == Verb::LineTo && (c == Verb::Close || c == Verb::End) {
                 // The next couple of .windows(3) calls will be `LineTo, Close/End, ???` and
