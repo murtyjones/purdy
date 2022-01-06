@@ -112,31 +112,29 @@ impl Pdf {
         self.end(true)
     }
 
-    /// For any single lines ending with a fill, makes them rectangles that can be filled
+    /// For any single linetos ending with a fill, makes them rectangles that can be filled
     fn make_fillable_if_needed(&mut self) {
-        // TODO: Need to make this dynamic to work with any number of lines
-        // self.verbs.insert(4, Verb::LineTo);
-        // self.verbs.insert(5, Verb::LineTo);
-
-        // begin, lineto, close
-        // begin, lineto, end, begin, lineto, end, close (need to verify that this is a valid arrangement)
-
-        // begin, lineto, end or close
         let mut points = self.points.iter().enumerate();
         let mut lineto_insertions = vec![];
         let mut point_replacements = vec![];
         let mut point_insertions = vec![];
-        // [(0.0, 792.0), (10.0, 10.0), (10.0, 20.0)]
-        // [Begin, End, Begin, LineTo, Close]
+        let mut skip_next_n_windows = 0;
         for (first_item_index, window) in self.verbs.windows(3).enumerate() {
+            if skip_next_n_windows > 0 {
+                skip_next_n_windows -= 1;
+                continue;
+            }
             let [a, b, c]: [Verb; 3] = window.try_into().unwrap();
-            // if a is not Close/End, move the points iter forward one
             let maybe_from = if a != Verb::Close && a != Verb::End {
                 points.next()
             } else {
                 None
             };
             if a == Verb::Begin && b == Verb::LineTo && (c == Verb::Close || c == Verb::End) {
+                // The next couple of .windows(3) calls will be `LineTo, Close/End, ???` and 
+                // `Close/End, ???, ???`. We can skip these two, and we must do so in order
+                // for our point iterator to work properly and not get ahead of itself
+                skip_next_n_windows += 2;
                 lineto_insertions.push(first_item_index + 2);
                 lineto_insertions.push(first_item_index + 2);
                 let (i, from) = maybe_from.unwrap();
@@ -163,8 +161,6 @@ impl Pdf {
         for (i, point) in point_insertions.into_iter().rev() {
             self.points.insert(i, point);
         }
-        // panic!("{:?}", self.points);
-
     }
 }
 
