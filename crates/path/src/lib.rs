@@ -54,6 +54,7 @@ pub mod path;
 pub mod path_buffer;
 pub mod polygon;
 pub mod pdf;
+mod utils;
 
 #[doc(hidden)]
 pub mod private;
