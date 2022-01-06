@@ -151,6 +151,12 @@ impl Pdf {
                 continue;
             }
             let [a, b, c]: [Verb; 3] = window.try_into().unwrap();
+            if a == Verb::CubicTo {
+                points.next();
+                points.next();
+                points.next();
+                continue;
+            }
             let maybe_from = if a != Verb::Close && a != Verb::End {
                 points.next()
             } else {
@@ -218,12 +224,16 @@ mod test {
         LineSegment,
     };
 
+    /// Just a single line
     #[test]
     fn test_as_rect_single_line() {
         let mut pdf = Pdf::new();
         pdf.points.append(&mut vec![
+            // moveto
             point(0.0, 792.0),
+            // moveto
             point(10.0, 10.0),
+            // lineto
             point(10.0, 20.0),
         ]);
         pdf.verbs
@@ -231,10 +241,15 @@ mod test {
         let path = pdf.build();
 
         let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
+            // moveto
             point(0.0, 792.0),
+            // moveto
             point(9.5, 20.0),
+            // lineto
             point(10.5, 20.0),
+            // lineto
             point(10.5, 10.0),
+            // lineto
             point(9.5, 10.0),
         ]);
         assert_eq!(path.points, expected_points);
@@ -243,14 +258,20 @@ mod test {
         assert_eq!(path.verbs, expected_verbs);
     }
 
+    /// Two single lines
     #[test]
     fn test_as_rect_two_lines() {
         let mut pdf = Pdf::new();
         pdf.points.append(&mut vec![
+            // moveto
             point(0.0, 792.0),
+            // moveto
             point(10.0, 10.0),
+            // lineto
             point(10.0, 20.0),
+            // moveto
             point(10.0, 10.0),
+            // lineto
             point(10.0, 20.0),
         ]);
         pdf.verbs.append(&mut vec![
@@ -258,9 +279,122 @@ mod test {
         ]);
         let path = pdf.build();
 
-        assert_eq!(path.points.len(), 9);
+        let expected_points: Box<[Point]> = Box::new([
+            // moveto:
+            point(0.0, 792.0),
+            // moveto:
+            point(9.5, 20.0),
+            // lineto:
+            point(10.5, 20.0),
+            // lineto:
+            point(10.5, 10.0),
+            // lineto:
+            point(9.5, 10.0),
+            // moveto:
+            point(9.5, 20.0),
+            // lineto:
+            point(10.5, 20.0),
+            // lineto:
+            point(10.5, 10.0),
+            // lineto:
+            point(9.5, 10.0),
+        ]);
+        assert_eq!(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
+        ]);
+        assert_eq!(path.verbs, expected_verbs);
+    }
+
+    /// A line followed by a cubic bezier
+    #[test]
+    fn test_as_rect_line_then_cubic_bez() {
+        let mut pdf = Pdf::new();
+        pdf.points.append(&mut vec![
+            // moveto:
+            point(0.0, 792.0),
+            // moveto:
+            point(10.0, 10.0),
+            //lineto:
+            point(10.0, 20.0),
+            // moveto:
+            point(20.0, 20.0),
+            // cubic bez to:
+            point(25.0, 25.0),
+            point(35.0, 35.0),
+            point(40.0, 25.0),
+        ]);
+        pdf.verbs.append(&mut vec![
+            Begin, End, Begin, LineTo, End, Begin, CubicTo, Close,
+        ]);
+        let path = pdf.build();
+
+        let expected_points: Box<[Point]> = Box::new([
+            // moveto:
+            point(0.0, 792.0),
+            // moveto:
+            point(9.5, 20.0),
+            //lineto:
+            point(10.5, 20.0),
+            point(10.5, 10.0),
+            point(9.5, 10.0),
+            // moveto:
+            point(20.0, 20.0),
+            // cubic bez to:
+            point(25.0, 25.0),
+            point(35.0, 35.0),
+            point(40.0, 25.0),
+        ]);
+        assert_eq!(path.points, expected_points);
+        let expected_verbs: Box<[Verb]> = Box::new([
+            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, CubicTo, Close,
+        ]);
+        assert_eq!(path.verbs, expected_verbs);
+    }
+
+    /// A cubic bezier followed by a line
+    #[test]
+    fn test_as_rect_cubic_bez_then_line() {
+        let mut pdf = Pdf::new();
+        pdf.points.append(&mut vec![
+            // moveto:
+            point(0.0, 792.0),
+            // moveto:
+            point(20.0, 20.0),
+            // cubic bez to:
+            point(25.0, 25.0),
+            point(35.0, 35.0),
+            point(40.0, 25.0),
+            // moveto:
+            point(10.0, 10.0),
+            //lineto:
+            point(10.0, 20.0),
+        ]);
+        pdf.verbs.append(&mut vec![
+            Begin, End, Begin, CubicTo, Close, Begin, LineTo, End,
+        ]);
+        let path = pdf.build();
+
+        let expected_points: Box<[Point]> = Box::new([
+            // moveto:
+            point(0.0, 792.0),
+            // moveto:
+            point(20.0, 20.0),
+            // cubic bez to:
+            point(25.0, 25.0),
+            point(35.0, 35.0),
+            point(40.0, 25.0),
+            // moveto:
+            point(9.5, 20.0),
+            //lineto:
+            point(10.5, 20.0),
+            point(10.5, 10.0),
+            point(9.5, 10.0),
+        ]);
+
+        assert_eq!(path.points, expected_points);
+        let expected_verbs: Box<[Verb]> = Box::new([
+            Begin, End, Begin, CubicTo, Close, Begin, LineTo, LineTo, LineTo, End,
         ]);
         assert_eq!(path.verbs, expected_verbs);
     }

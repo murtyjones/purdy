@@ -109,9 +109,8 @@ fn main() {
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(10.0, 10.0));
     builder.line_to(point(10.0, 20.0));
-    // TODO: Test with fillable logic
-    // builder.move_to(point(20.0, 20.0));
-    // builder.cubic_bezier_to(point(25.0, 25.0), point(35.0, 35.0), point(40.0, 25.0));
+    builder.move_to(point(20.0, 20.0));
+    builder.cubic_bezier_to(point(25.0, 25.0), point(35.0, 35.0), point(40.0, 25.0));
     builder.close();
     use lyon::path::builder::Build;
     let path = builder.build();
