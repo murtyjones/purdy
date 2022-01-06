@@ -104,7 +104,7 @@ fn main() {
     let mut stroke_tess = StrokeTessellator::new();
 
     let mut builder = Pdf::new(
-        // TODO: Pass page params
+        // TODO: Pass any useful parameters about the page (e.g. height/width)
     );
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(10.0, 10.0));
