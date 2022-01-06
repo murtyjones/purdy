@@ -112,6 +112,32 @@ impl Pdf {
         self.end(true)
     }
 
+    // TODO: Ensure that this matches the PDF model for bezier curves. It seems to but just double check it
+    pub fn cubic_bezier_to(&mut self, ctrl1: Point, ctrl2: Point, to: Point) -> EndpointId {
+        if let Some(id) = self.begin_if_needed(&to) {
+            return id;
+        }
+
+        // TODO: Not sure whether any of this is needed for any reason. Seems unlikely
+        // self.current_position = to;
+        // self.last_cmd = Verb::CubicTo;
+        // self.last_ctrl = ctrl2;
+
+        // TODO: Add validator
+        // self.validator.edge();
+        nan_check(ctrl1);
+        nan_check(ctrl2);
+        nan_check(to);
+
+        self.points.push(ctrl1);
+        self.points.push(ctrl2);
+        let id = EndpointId(self.points.len() as u32);
+        self.points.push(to);
+        self.verbs.push(Verb::CubicTo);
+
+        id
+    }
+
     /// For any single linetos ending with a fill, makes them rectangles that can be filled
     fn make_fillable_if_needed(&mut self) {
         let mut points = self.points.iter().enumerate();
