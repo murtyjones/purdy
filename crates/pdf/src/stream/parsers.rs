@@ -1,4 +1,4 @@
-use lyon_geom::Point;
+use lyon_geom::{point, Point};
 use lyon_path::LineCap;
 
 use nom::{
@@ -85,7 +85,7 @@ fn move_to(input: &[u8]) -> ParseResult<Point<f32>> {
     map(
         terminated(tuple((ws(int1::<u32>), ws(int1::<u32>))), ws(char('m'))),
         // TODO: any issue with number overflow?
-        |(x, y)| Point::from((x as f32, y as f32)),
+        |(x, y)| point(x as f32, y as f32),
     )(input)
 }
 
@@ -93,7 +93,7 @@ fn line_to(input: &[u8]) -> ParseResult<Point<f32>> {
     map(
         terminated(tuple((ws(int1::<u32>), ws(int1::<u32>))), ws(char('l'))),
         // TODO: any issue with number overflow?
-        |(x, y)| Point::from((x as f32, y as f32)),
+        |(x, y)| point(x as f32, y as f32),
     )(input)
 }
 
@@ -118,10 +118,10 @@ pub fn stream_objects(input: &[u8]) -> ParseResult<Vec<StreamObject<'_>>> {
 
 #[cfg(test)]
 mod test {
-    use lyon_path::LineCap;
-
     use super::stream_objects;
     use crate::stream::{Rgb, StreamObject, TextContent};
+    use lyon_geom::point;
+    use lyon_path::{math::Point, LineCap};
 
     #[test]
     fn test_text_stream() {
@@ -159,18 +159,19 @@ ET";
             ]
         )
     }
-    
+
     #[test]
     fn test_drawing_stream() {
         let input = b"500 500 m
 600 600 l
 f";
+
         assert_eq!(
             stream_objects(input).unwrap().1,
             vec![
-                StreamObject::MoveTo((500.0, 500.0)),
-                StreamObject::MoveTo((500.0, 500.0)),
-                StreamObject::MoveTo((500.0, 500.0)),
+                StreamObject::MoveTo(point(500.0, 500.0)),
+                StreamObject::LineTo(point(600.0, 600.0)),
+                StreamObject::Fill,
             ]
         )
     }
