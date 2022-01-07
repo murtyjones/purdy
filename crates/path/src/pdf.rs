@@ -322,11 +322,11 @@ mod test {
             point(10.5, 10.0),
             point(9.5, 10.0),
             // moveto
-            point(13.497057, 16.931812),
+            point(9.552786, 20.223608),
             // lineto
-            point(14.391484, 16.484598),
-            point(4.3914857, -3.5154023),
-            point(3.4970584, -3.0681891),
+            point(10.447212, 19.776394),
+            point(0.4472146, -0.22360802),
+            point(-0.4472127, 0.22360611)
         ]);
         assert_eq!(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
@@ -469,11 +469,11 @@ mod test {
             // moveto:
             point(10.0, 10.0),
             // moveto:
-            point(7.727147, 21.009514),
+            point(9.5030575, 19.944784),
             //lineto:
-            point(8.721031, 21.119946),
-            point(9.721032, 12.119945),
-            point(8.727148, 12.009513),
+            point(10.496942, 20.055216),
+            point(11.4969425, 11.055216),
+            point(10.503058, 10.944784),
         ]);
 
         assert_eq!(path.points, expected_points);
@@ -517,11 +517,11 @@ mod test {
             // moveto:
             point(0.0, 792.0),
             // moveto:
-            point(-25.0, 14.499999),
+            point(10.0, 19.5),
             // lineto:
-            point(-25.0, 15.499999),
-            point(-15.000001, 15.499999),
-            point(-15.000001, 14.499999),
+            point(10.0, 20.5),
+            point(20.0, 20.5),
+            point(20.0, 19.5),
             // moveto:
             point(20.0, 20.0),
             // quad bez:
@@ -583,11 +583,11 @@ mod test {
             point(25.0, 25.0),
             point(20.0, 20.0),
             // moveto:
-            point(-25.0, 14.499999),
+            point(10.0, 19.5),
             // lineto:
-            point(-25.0, 15.499999),
-            point(-15.000001, 15.499999),
-            point(-15.000001, 14.499999),
+            point(10.0, 20.5),
+            point(20.0, 20.5),
+            point(20.0, 19.5),
         ]);
 
         assert_eq!(path.points, expected_points);

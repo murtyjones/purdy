@@ -447,18 +447,18 @@ impl<S: Scalar> LineSegment<S> {
         
         let x_mid = (self.from.x + self.to.x) / S::TWO;
         let y_mid = (self.from.y + self.to.y) / S::TWO;
-        let translation = Translation::new(x_mid, y_mid);
-        let p1 = translation.transform_point(p1);
-        let p2 = translation.transform_point(p2);
-        let p3 = translation.transform_point(p3);
-        let p4 = translation.transform_point(p4);
-        
         let degrees = S::atan2(self.to.y - self.from.y, self.to.x - self.from.x).to_degrees() - S::NINETY;
         let rotation = Rotation::new(Angle::degrees(degrees));
         let p1 = rotation.transform_point(p1);
         let p2 = rotation.transform_point(p2);
         let p3 = rotation.transform_point(p3);
         let p4 = rotation.transform_point(p4);
+
+        let translation = Translation::new(x_mid, y_mid);
+        let p1 = translation.transform_point(p1);
+        let p2 = translation.transform_point(p2);
+        let p3 = translation.transform_point(p3);
+        let p4 = translation.transform_point(p4);
 
         [p1, p2, p3, p4]
     }
@@ -1156,4 +1156,13 @@ fn clipped() {
         assert_eq!(segment.clipped(&b), None);
         assert_eq!(segment.flip().clipped(&b), None);
     }
+}
+
+#[test]
+fn test_as_rect() {
+    let from = point(10.0, 10.0);
+    let to = point(10.0, 20.0);
+    let line = LineSegment { from, to };
+    let new_points = line.as_rect();
+    panic!("{:?}", new_points);
 }

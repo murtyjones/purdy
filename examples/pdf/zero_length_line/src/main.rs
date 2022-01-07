@@ -108,9 +108,7 @@ fn main() {
     );
     builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
     builder.move_to(point(20.0, 20.0));
-    builder.quadratic_bezier_to(point(25.0, -20.0), point(30.0, 20.0));
-    builder.move_to(point(20.0, 20.0));
-    builder.line_to(point(10.0, 20.0));
+    builder.line_to(point(20.0, 10.0));
     builder.close();
     use lyon::path::builder::Build;
     let path = builder.build();
