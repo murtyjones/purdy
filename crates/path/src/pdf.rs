@@ -230,6 +230,9 @@ impl Build for Pdf {
         // self.validator.build();
         // TODO: Since we don't know at this point in the code whether or not there will be a fill,
         //       we should probably move this call up higher in the code
+        //       IDEA: At the time we close a given path, if it's a fill and has just one LineTo,
+        //             then invoke the method for just the last three verbs and their points. This
+        //             should also improve runtime
         self.make_fillable_if_needed();
 
         Path {
