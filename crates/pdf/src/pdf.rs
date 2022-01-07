@@ -3,7 +3,7 @@ use crate::utils::extend_lifetime;
 use anyhow::Result;
 
 pub struct Pdf {
-    document: Document<'static>,
+    pub document: Document<'static>,
 }
 
 impl Pdf {

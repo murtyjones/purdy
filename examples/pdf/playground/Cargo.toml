@@ -13,3 +13,4 @@ bytemuck = "1.7.3"
 wgpu = "0.11.1"
 futures = "0.3.19"
 lyon = { path = "../../../crates/lyon", features = ["extra"] }
+pdf = { path = "../../../crates/pdf" }

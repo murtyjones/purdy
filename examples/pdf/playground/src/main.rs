@@ -2,6 +2,8 @@ use lyon::geom::Box2D;
 use lyon::math::*;
 use lyon::path::Path;
 use lyon::path::pdf::Pdf;
+use pdf::utils::read_file_bytes;
+use pdf::{Pdf as PdfDocument};
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
@@ -82,6 +84,15 @@ const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
 fn main() {
     // Number of samples for anti-aliasing
+    let mut pdf = {
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
+        ));
+        PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
+    };
+    let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
+    // panic!("{:?}", drawing.as_stream().unwrap().dict);
     // Set to 1 to disable
     let sample_count = 1;
 

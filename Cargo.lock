@@ -1819,6 +1819,7 @@ dependencies = [
  "futures",
  "image",
  "lyon",
+ "pdf",
  "png",
  "wgpu",
 ]
