@@ -511,7 +511,7 @@ fn main() {
 
     queue.submit(Some(encoder.finish()));
 
-    block_on(write_to_disk(device, buffer_dimensions, output_buffer)).unwrap();
+    block_on(write_to_disk(OUTPUT, device, buffer_dimensions, output_buffer)).unwrap();
 }
 
 /// This vertex constructor forwards the positions and normals provided by the
@@ -572,6 +572,7 @@ impl BufferDimensions {
 }
 
 async fn write_to_disk<'a, 'b>(
+    filename: &str,
     device: wgpu::Device,
     buffer_dimensions: BufferDimensions,
     output_buffer: wgpu::Buffer,
@@ -593,7 +594,7 @@ async fn write_to_disk<'a, 'b>(
         let padded_buffer = buffer_slice.get_mapped_range();
 
         let mut png_encoder = png::Encoder::new(
-            std::fs::File::create(OUTPUT).unwrap(),
+            std::fs::File::create(filename).unwrap(),
             buffer_dimensions.width as u32,
             buffer_dimensions.height as u32,
         );
