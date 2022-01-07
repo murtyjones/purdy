@@ -81,13 +81,6 @@ const DEFAULT_WINDOW_WIDTH: f32 = 612.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
 fn main() {
-    println!("== wgpu example ==");
-    println!("Controls:");
-    println!("  Arrow keys: scrolling");
-    println!("  PgUp/PgDown: zoom in/out");
-    println!("  b: toggle drawing the background");
-    println!("  a/z: increase/decrease the stroke width");
-
     // Number of samples for anti-aliasing
     // Set to 1 to disable
     let sample_count = 1;
