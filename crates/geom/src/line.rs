@@ -1157,12 +1157,3 @@ fn clipped() {
         assert_eq!(segment.flip().clipped(&b), None);
     }
 }
-
-#[test]
-fn test_as_rect() {
-    let from = point(10.0, 10.0);
-    let to = point(10.0, 20.0);
-    let line = LineSegment { from, to };
-    let new_points = line.as_rect();
-    panic!("{:?}", new_points);
-}
