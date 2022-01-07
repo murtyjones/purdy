@@ -1,6 +1,6 @@
 use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom, ObjectId};
 use anyhow::Result;
-use lyon_geom::Point;
+use lyon_geom::Vector;
 use lyon_path::LineCap;
 use crate::error::ParseError;
 
@@ -37,8 +37,8 @@ pub struct TextContent<'a> {
 pub enum StreamObject<'a> {
     Text(TextContent<'a>),
     CapStyle(LineCap),
-    MoveTo(Point<f32>),
-    LineTo(Point<f32>),
+    MoveTo(Vector<f32>),
+    LineTo(Vector<f32>),
     Stroke,
     Fill,
 }

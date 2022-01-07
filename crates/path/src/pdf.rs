@@ -1,41 +1,56 @@
 use crate::{
     builder::nan_check,
-    math::{point, Point},
+    math::{point, Point, Vector},
     path::Verb,
     traits::Build,
     Attributes, EndpointId, Path,
 };
-use lyon_geom::LineSegment;
-use std::convert::TryInto;
+use lyon_geom::{LineSegment, vector};
+use std::{convert::TryInto, borrow::BorrowMut};
 
 pub struct Pdf {
     pub(crate) points: Vec<Point>,
     pub(crate) verbs: Vec<Verb>,
     first_position: Point,
-    need_moveto: bool,
-    is_empty: bool,
+    current_position: Point,
+    page_width: f32,
+    page_height: f32,
 }
 
 impl Pdf {
-    pub fn new() -> Self {
-        Pdf {
+    pub fn new(page_width: f32, page_height: f32) -> Self {
+        let mut p = Pdf {
             points: vec![],
             verbs: vec![],
             // TODO: start at bottom left of page, I think
-            first_position: point(0.0, 0.0),
-            need_moveto: true,
-            is_empty: true,
-        }
+            first_position: point(-page_width / 2.0, page_height / 2.0),
+            current_position: point(-page_width / 2.0, page_height / 2.0),
+            page_width,
+            page_height,
+        };
+        p.move_to_abs(p.first_position);
+        p
     }
 
-    pub fn move_to(&mut self, to: Point) -> EndpointId {
+    pub fn move_to(&mut self, to: Vector) -> EndpointId {
+        self.end_if_needed();
+
+        let to = vector(to.x, -to.y);
+        let to = self.first_position + to;
+        // panic!("{:?}", to);
+        let id = self.begin(to, None);
+
+        self.current_position = to;
+
+        id
+    }
+
+    pub fn move_to_abs(&mut self, to: Point) -> EndpointId {
         self.end_if_needed();
 
         let id = self.begin(to, None);
 
-        self.is_empty = false;
-        self.need_moveto = false;
-        self.first_position = to;
+        self.current_position = to;
 
         id
     }
@@ -66,11 +81,13 @@ impl Pdf {
         self.verbs.push(if close { Verb::Close } else { Verb::End });
     }
 
-    pub fn line_to(&mut self, to: Point) -> EndpointId {
-        if let Some(id) = self.begin_if_needed(&to) {
-            return id;
-        }
+    pub fn line_to(&mut self, to: Vector) -> EndpointId {
+        // TODO: assert that there is a moveto command in the subpath? Not
+        // sure this is needed for PDFs but it's in the WithSVG impl
 
+        let to = vector(to.x, -to.y);
+        let to = self.first_position + to;
+        
         // TODO: Create validator
         // self.validator.edge();
         nan_check(to);
@@ -82,40 +99,14 @@ impl Pdf {
         id
     }
 
-    #[inline(always)]
-    fn begin_if_needed(&mut self, default: &Point) -> Option<EndpointId> {
-        if self.need_moveto {
-            return self.insert_move_to(default);
-        }
-
-        None
-    }
-
-    #[inline(never)]
-    fn insert_move_to(&mut self, default: &Point) -> Option<EndpointId> {
-        if self.is_empty {
-            return Some(self.move_to(*default));
-        }
-
-        self.move_to(self.first_position);
-
-        None
-    }
-
     pub fn close(&mut self) {
-        if self.need_moveto {
-            return;
-        }
-
-        self.need_moveto = true;
-
+        // TODO: Assert some stuff about path validity
         self.end(true)
     }
 
     pub fn cubic_bezier_to(&mut self, ctrl1: Point, ctrl2: Point, to: Point) -> EndpointId {
-        if let Some(id) = self.begin_if_needed(&to) {
-            return id;
-        }
+        // TODO: assert that there is a moveto command in the subpath? Not
+        // sure this is needed for PDFs but it's in the WithSVG impl
 
         // TODO: Not sure whether any of this is needed for any reason. Seems unlikely
         // self.current_position = to;
@@ -138,9 +129,8 @@ impl Pdf {
     }
 
     pub fn quadratic_bezier_to(&mut self, ctrl: Point, to: Point) -> EndpointId {
-        if let Some(id) = self.begin_if_needed(&to) {
-            return id;
-        }
+        // TODO: assert that there is a moveto command in the subpath? Not
+        // sure this is needed for PDFs but it's in the WithSVG impl
 
         // TODO: Add validator
         // self.validator.edge();

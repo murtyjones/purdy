@@ -23,6 +23,7 @@ mod known;
 extern crate maplit;
 
 pub use crate::pdf::Pdf;
+pub use crate::stream::StreamObject;
 
 type ParseResult<'a, U> = IResult<&'a [u8], U, VerboseError<&'a [u8]>>;
 

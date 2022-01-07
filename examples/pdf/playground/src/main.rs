@@ -1,14 +1,14 @@
 use lyon::geom::Box2D;
 use lyon::math::*;
-use lyon::path::Path;
 use lyon::path::pdf::Pdf;
 use pdf::utils::read_file_bytes;
-use pdf::{Pdf as PdfDocument};
+use pdf::{Pdf as PdfDocument, StreamObject};
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
 use std::io::Write;
+use lyon::path::builder::Build;
 
 // For create_buffer_init()
 use wgpu::util::DeviceExt;
@@ -92,7 +92,34 @@ fn main() {
         PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
     };
     let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
-    panic!("{:?}", drawing.as_stream().unwrap().get_content());
+    let draw_instructions = drawing.as_stream().unwrap().get_content().unwrap();
+
+    let mut builder = Pdf::new(
+        DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+    );
+    let mut should_fill = false;
+    let mut should_stroke = false;
+    for inst in draw_instructions {
+        match inst {
+            StreamObject::Text(_) => unimplemented!(),
+            StreamObject::CapStyle(_) => unimplemented!(),
+            StreamObject::MoveTo(p) => {
+                builder.move_to(p);
+            }
+            StreamObject::LineTo(p) => {
+                builder.line_to(p);
+            }
+            StreamObject::Fill => {
+                should_fill = true;
+            }
+            StreamObject::Stroke => {
+                should_stroke = true;
+            }
+        }
+    }
+    builder.close();
+    let path = builder.build();
+
     // Set to 1 to disable
     let sample_count = 1;
 
@@ -106,16 +133,6 @@ fn main() {
 
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
-
-    let mut builder = Pdf::new(
-        // TODO: Pass any useful parameters about the page (e.g. height/width)
-    );
-    builder.move_to(point(0.0, DEFAULT_WINDOW_HEIGHT));
-    builder.move_to(point(20.0, 20.0));
-    builder.line_to(point(20.0, 10.0));
-    builder.close();
-    use lyon::path::builder::Build;
-    let path = builder.build();
 
     fill_tess
         .tessellate_path(
