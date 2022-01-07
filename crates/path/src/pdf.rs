@@ -241,7 +241,7 @@ impl Build for Pdf {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::path::Verb::*;
+    use crate::{path::Verb::*, test_utils::assert_relative_eq_boxed_pt_slice};
     use lyon_geom::{
         euclid::{Point2D, UnknownUnit},
         LineSegment,
@@ -275,7 +275,7 @@ mod test {
             // lineto
             point(9.5, 10.0),
         ]);
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> =
             Box::new([Begin, End, Begin, LineTo, LineTo, LineTo, Close]);
         assert_eq!(path.verbs, expected_verbs);
@@ -328,7 +328,7 @@ mod test {
             point(0.4472146, -0.22360802),
             point(-0.4472127, 0.22360611)
         ]);
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
         ]);
@@ -374,7 +374,7 @@ mod test {
             point(35.0, 35.0),
             point(40.0, 25.0),
         ]);
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, CubicTo, Close,
         ]);
@@ -421,7 +421,7 @@ mod test {
             point(9.5, 10.0),
         ]);
 
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin, End, Begin, CubicTo, Close, Begin, LineTo, LineTo, LineTo, End,
         ]);
@@ -476,7 +476,7 @@ mod test {
             point(10.503058, 10.944784),
         ]);
 
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin, End, Begin, End, Begin, CubicTo, Close, Begin, End, Begin, LineTo, LineTo,
             LineTo, End,
@@ -590,7 +590,7 @@ mod test {
             point(20.0, 19.5),
         ]);
 
-        assert_eq!(path.points, expected_points);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
             Begin,
             End,
