@@ -228,6 +228,8 @@ impl Build for Pdf {
         self.end_if_needed();
         // TODO: Implement validator
         // self.validator.build();
+        // TODO: Since we don't know at this point in the code whether or not there will be a fill,
+        //       we should probably move this call up higher in the code
         self.make_fillable_if_needed();
 
         Path {
