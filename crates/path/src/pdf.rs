@@ -326,11 +326,12 @@ mod test {
             // lineto
             point(10.447212, 19.776394),
             point(0.4472146, -0.22360802),
-            point(-0.4472127, 0.22360611)
+            point(-0.4472127, 0.22360611),
         ]);
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, Close,
+            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, End,
+            Begin, LineTo, LineTo, LineTo, Close,
         ]);
         assert_eq!(path.verbs, expected_verbs);
     }
