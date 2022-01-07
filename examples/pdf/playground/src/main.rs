@@ -1,3 +1,5 @@
+#![feature(type_ascription)]
+
 use lyon::geom::Box2D;
 use lyon::math::*;
 use lyon::path::pdf::Pdf;
@@ -19,6 +21,9 @@ use std::num::NonZeroU32;
 const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
+
+mod state;
+pub use state::*;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
