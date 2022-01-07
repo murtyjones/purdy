@@ -101,6 +101,10 @@ fn stroke(input: &[u8]) -> ParseResult<()> {
     map(ws(char('S')), |_| ())(input)
 }
 
+fn fill(input: &[u8]) -> ParseResult<()> {
+    map(ws(char('f')), |_| ())(input)
+}
+
 pub fn stream_objects(input: &[u8]) -> ParseResult<Vec<StreamObject<'_>>> {
     many0(alt((
         map(text, StreamObject::Text),
@@ -108,6 +112,7 @@ pub fn stream_objects(input: &[u8]) -> ParseResult<Vec<StreamObject<'_>>> {
         map(move_to, StreamObject::MoveTo),
         map(line_to, StreamObject::LineTo),
         map(stroke, |_| StreamObject::Stroke),
+        map(fill, |_| StreamObject::Fill),
     )))(input)
 }
 
@@ -119,7 +124,7 @@ mod test {
     use crate::stream::{Rgb, StreamObject, TextContent};
 
     #[test]
-    fn test_stream() {
+    fn test_text_stream() {
         let input = b"2 J
 BT
 0 0 0 rg
@@ -151,6 +156,21 @@ ET";
                     contents:
                         b" ...continued from page 1. Yet more text. And more text. And more text. "
                 })
+            ]
+        )
+    }
+    
+    #[test]
+    fn test_drawing_stream() {
+        let input = b"500 500 m
+600 600 l
+f";
+        assert_eq!(
+            stream_objects(input).unwrap().1,
+            vec![
+                StreamObject::MoveTo((500.0, 500.0)),
+                StreamObject::MoveTo((500.0, 500.0)),
+                StreamObject::MoveTo((500.0, 500.0)),
             ]
         )
     }

@@ -1,7 +1,8 @@
-use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom};
+use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom, ObjectId};
 use anyhow::Result;
 use lyon_geom::Point;
 use lyon_path::LineCap;
+use crate::error::ParseError;
 
 use self::parsers::stream_objects;
 
@@ -39,10 +40,15 @@ pub enum StreamObject<'a> {
     MoveTo(Point<f32>),
     LineTo(Point<f32>),
     Stroke,
+    Fill,
 }
 
 impl<'a> Stream<'a> {
     pub fn get_content(&self) -> Result<Vec<StreamObject<'a>>> {
-        strip_nom(stream_objects(self.content))
+        let (rest, content) = stream_objects(self.content)?;
+        if !rest.is_empty() {
+            return Err(ParseError::FailedToParseAllStreamContent.into());
+        }
+        Ok(content)
     }
 }

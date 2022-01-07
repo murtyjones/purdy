@@ -92,7 +92,7 @@ fn main() {
         PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
     };
     let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
-    // panic!("{:?}", drawing.as_stream().unwrap().dict);
+    panic!("{:?}", drawing.as_stream().unwrap().get_content());
     // Set to 1 to disable
     let sample_count = 1;
 

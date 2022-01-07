@@ -29,6 +29,8 @@ pub enum XrefError {
 pub enum ParseError {
     #[error("Cap style should be 0, 1, 2 but was {0}")]
     InvalidCapStyle(i32),
+    #[error("Failed to parse entire object stream for object")]
+    FailedToParseAllStreamContent,
 }
 
 // impl<'a> std::convert::From<Utf8Error> for Error<'a> {
