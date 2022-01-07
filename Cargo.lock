@@ -1812,6 +1812,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
 
 [[package]]
+name = "playground"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "futures",
+ "image",
+ "lyon",
+ "png",
+ "wgpu",
+]
+
+[[package]]
 name = "png"
 version = "0.16.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2968,15 +2980,3 @@ name = "xmlwriter"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
-
-[[package]]
-name = "zero_length_line"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "futures",
- "image",
- "lyon",
- "png",
- "wgpu",
-]

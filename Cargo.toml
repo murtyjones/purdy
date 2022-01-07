@@ -15,7 +15,7 @@ members = [
     "bench/tess",
     "bench/path",
     "bench/geom",
-    "examples/pdf/zero_length_line",
+    "examples/pdf/playground",
 ]
 
 exclude = [
