@@ -14,3 +14,6 @@ wgpu = "0.11.1"
 futures = "0.3.19"
 lyon = { path = "../../../crates/lyon", features = ["extra"] }
 pdf = { path = "../../../crates/pdf" }
+# TODO: Delete these:
+anyhow = "1.0.52"
+thiserror = "1.0.30"

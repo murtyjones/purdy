@@ -8,7 +8,6 @@ use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
 use std::io::Write;
-use lyon::path::builder::Build;
 
 // For create_buffer_init()
 use wgpu::util::DeviceExt;
@@ -19,6 +18,9 @@ use std::num::NonZeroU32;
 const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
+
+mod graphics_state;
+pub use graphics_state::*;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -93,7 +95,7 @@ fn main() {
     };
     let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
     let draw_instructions = drawing.as_stream().unwrap().get_content().unwrap();
-
+    let mut graphics_state = GraphicsState::new(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     let mut builder = Pdf::new(
         DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
     );
@@ -104,10 +106,10 @@ fn main() {
             StreamObject::Text(_) => unimplemented!(),
             StreamObject::CapStyle(_) => unimplemented!(),
             StreamObject::MoveTo(p) => {
-                builder.move_to(p);
+                graphics_state.move_to(p);
             }
             StreamObject::LineTo(p) => {
-                builder.line_to(p);
+                graphics_state.line_to(p);
             }
             StreamObject::Fill => {
                 should_fill = true;
@@ -117,8 +119,8 @@ fn main() {
             }
         }
     }
-    builder.close();
-    let path = builder.build();
+    graphics_state.close().unwrap();
+    let path = graphics_state.finished_paths.get(0).unwrap();
 
     // Set to 1 to disable
     let sample_count = 1;
@@ -136,7 +138,7 @@ fn main() {
 
     fill_tess
         .tessellate_path(
-            &path,
+            path,
             &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
             &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
         )
@@ -146,7 +148,7 @@ fn main() {
 
     // stroke_tess
     //     .tessellate_path(
-    //         &path,
+    //         path,
     //         &StrokeOptions::tolerance(tolerance),
     //         &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
     //     )

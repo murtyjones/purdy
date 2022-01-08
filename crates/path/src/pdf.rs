@@ -8,6 +8,7 @@ use crate::{
 use lyon_geom::{vector, LineSegment};
 use std::{borrow::BorrowMut, convert::TryInto};
 
+#[derive(Debug)]
 pub struct Pdf {
     pub(crate) points: Vec<Point>,
     pub(crate) verbs: Vec<Verb>,
