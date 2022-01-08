@@ -22,8 +22,8 @@ const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
 
-mod state;
-pub use state::*;
+mod graphics_state;
+pub use graphics_state::*;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
