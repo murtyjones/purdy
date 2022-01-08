@@ -1,5 +1,3 @@
-#![feature(type_ascription)]
-
 use lyon::geom::Box2D;
 use lyon::math::*;
 use lyon::path::pdf::Pdf;
