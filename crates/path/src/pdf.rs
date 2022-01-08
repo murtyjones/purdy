@@ -5,8 +5,8 @@ use crate::{
     traits::Build,
     Attributes, EndpointId, Path,
 };
-use lyon_geom::{LineSegment, vector};
-use std::{convert::TryInto, borrow::BorrowMut};
+use lyon_geom::{vector, LineSegment};
+use std::{borrow::BorrowMut, convert::TryInto};
 
 pub struct Pdf {
     pub(crate) points: Vec<Point>,
@@ -37,7 +37,6 @@ impl Pdf {
 
         let to = vector(to.x, -to.y);
         let to = self.first_position + to;
-        // panic!("{:?}", to);
         let id = self.begin(to, None);
 
         self.current_position = to;
@@ -45,7 +44,7 @@ impl Pdf {
         id
     }
 
-    pub fn move_to_abs(&mut self, to: Point) -> EndpointId {
+    fn move_to_abs(&mut self, to: Point) -> EndpointId {
         self.end_if_needed();
 
         let id = self.begin(to, None);
@@ -87,7 +86,7 @@ impl Pdf {
 
         let to = vector(to.x, -to.y);
         let to = self.first_position + to;
-        
+
         // TODO: Create validator
         // self.validator.edge();
         nan_check(to);
@@ -238,367 +237,26 @@ mod test {
     use super::*;
     use crate::{path::Verb::*, test_utils::assert_relative_eq_boxed_pt_slice};
     use lyon_geom::{
-        euclid::{Point2D, UnknownUnit},
-        LineSegment,
+        euclid::{Point2D, UnknownUnit}
     };
 
-    /// Just a single line
     #[test]
-    fn test_as_rect_single_line() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto
-            point(0.0, 792.0),
-            // moveto
-            point(10.0, 10.0),
-            // lineto
-            point(10.0, 20.0),
-        ]);
-        pdf.verbs
-            .append(&mut vec![Begin, End, Begin, LineTo, Close]);
+    fn test_converts_single_line_to_rect() {
+        let mut pdf = Pdf::new(800.0, 800.0);
+        pdf.line_to(vector(10.0, 10.0));
         let path = pdf.build();
 
         let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
-            // moveto
-            point(0.0, 792.0),
-            // moveto
-            point(9.5, 20.0),
-            // lineto
-            point(10.5, 20.0),
-            // lineto
-            point(10.5, 10.0),
-            // lineto
-            point(9.5, 10.0),
+            // MoveTo:
+            point(-389.64645, 390.35355),
+            // LineTo:
+            point(-390.35355, 389.64645),
+            point(-400.35355, 399.64645),
+            point(-399.64645, 400.35355)
         ]);
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> =
-            Box::new([Begin, End, Begin, LineTo, LineTo, LineTo, Close]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// Multiple lines
-    #[test]
-    fn test_as_rect_multiple_lines() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto
-            point(0.0, 792.0),
-            // moveto
-            point(10.0, 10.0),
-            // lineto
-            point(10.0, 20.0),
-            // moveto
-            point(10.0, 10.0),
-            // lineto
-            point(10.0, 20.0),
-            // moveto
-            point(0.0, 0.0),
-            // lineto
-            point(10.0, 20.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin, End, Begin, LineTo, End, Begin, LineTo, End, Begin, LineTo, Close,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(9.5, 20.0),
-            // lineto:
-            point(10.5, 20.0),
-            point(10.5, 10.0),
-            point(9.5, 10.0),
-            // moveto:
-            point(9.5, 20.0),
-            // lineto:
-            point(10.5, 20.0),
-            point(10.5, 10.0),
-            point(9.5, 10.0),
-            // moveto
-            point(9.552786, 20.223608),
-            // lineto
-            point(10.447212, 19.776394),
-            point(0.4472146, -0.22360802),
-            point(-0.4472127, 0.22360611),
-        ]);
-        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, LineTo, LineTo, LineTo, End,
-            Begin, LineTo, LineTo, LineTo, Close,
-        ]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// A line followed by a cubic bezier
-    #[test]
-    fn test_as_rect_line_then_cubic_bez() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(10.0, 10.0),
-            //lineto:
-            point(10.0, 20.0),
-            // moveto:
-            point(20.0, 20.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin, End, Begin, LineTo, End, Begin, CubicTo, Close,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(9.5, 20.0),
-            //lineto:
-            point(10.5, 20.0),
-            point(10.5, 10.0),
-            point(9.5, 10.0),
-            // moveto:
-            point(20.0, 20.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-        ]);
-        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, LineTo, LineTo, LineTo, End, Begin, CubicTo, Close,
-        ]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// A cubic bezier followed by a line
-    #[test]
-    fn test_as_rect_cubic_bez_then_line() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-            // moveto:
-            point(10.0, 10.0),
-            //lineto:
-            point(10.0, 20.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin, End, Begin, CubicTo, Close, Begin, LineTo, End,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-            // moveto:
-            point(9.5, 20.0),
-            //lineto:
-            point(10.5, 20.0),
-            point(10.5, 10.0),
-            point(9.5, 10.0),
-        ]);
-
-        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, CubicTo, Close, Begin, LineTo, LineTo, LineTo, End,
-        ]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// A couple of movetos followed by a line
-    #[test]
-    fn test_as_rect_moveto_then_line() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // moveto:
-            point(21.0, 21.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-            // moveto:
-            point(10.0, 10.0),
-            // moveto:
-            point(11.0, 11.0),
-            //lineto:
-            point(10.0, 20.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin, End, Begin, End, Begin, CubicTo, Close, Begin, End, Begin, LineTo, End,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // moveto:
-            point(21.0, 21.0),
-            // cubic bez to:
-            point(25.0, 25.0),
-            point(35.0, 35.0),
-            point(40.0, 25.0),
-            // moveto:
-            point(10.0, 10.0),
-            // moveto:
-            point(9.5030575, 19.944784),
-            //lineto:
-            point(10.496942, 20.055216),
-            point(11.4969425, 11.055216),
-            point(10.503058, 10.944784),
-        ]);
-
-        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin, End, Begin, End, Begin, CubicTo, Close, Begin, End, Begin, LineTo, LineTo,
-            LineTo, End,
-        ]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// A line followed by a cubic bezier
-    #[test]
-    fn test_as_rect_line_then_quadratic_bez() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // lineto:
-            point(10.0, 20.0),
-            // moveto:
-            point(20.0, 20.0),
-            // quad bez:
-            point(25.0, 25.0),
-            point(20.0, 20.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin,
-            End,
-            Begin,
-            LineTo,
-            Close,
-            Begin,
-            QuadraticTo,
-            End,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(10.0, 19.5),
-            // lineto:
-            point(10.0, 20.5),
-            point(20.0, 20.5),
-            point(20.0, 19.5),
-            // moveto:
-            point(20.0, 20.0),
-            // quad bez:
-            point(25.0, 25.0),
-            point(20.0, 20.0),
-        ]);
-
-        assert_eq!(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin,
-            End,
-            Begin,
-            LineTo,
-            LineTo,
-            LineTo,
-            Close,
-            Begin,
-            QuadraticTo,
-            End,
-        ]);
-        assert_eq!(path.verbs, expected_verbs);
-    }
-
-    /// A cubic bezier followed by a line
-    #[test]
-    fn test_as_rect_quadratic_bez_then_line() {
-        let mut pdf = Pdf::new();
-        pdf.points.append(&mut vec![
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // quad bez:
-            point(25.0, 25.0),
-            point(20.0, 20.0),
-            // moveto:
-            point(20.0, 20.0),
-            // lineto:
-            point(10.0, 20.0),
-        ]);
-        pdf.verbs.append(&mut vec![
-            Begin,
-            End,
-            Begin,
-            QuadraticTo,
-            End,
-            Begin,
-            LineTo,
-            Close,
-        ]);
-        let path = pdf.build();
-
-        let expected_points: Box<[Point]> = Box::new([
-            // moveto:
-            point(0.0, 792.0),
-            // moveto:
-            point(20.0, 20.0),
-            // quad bez:
-            point(25.0, 25.0),
-            point(20.0, 20.0),
-            // moveto:
-            point(10.0, 19.5),
-            // lineto:
-            point(10.0, 20.5),
-            point(20.0, 20.5),
-            point(20.0, 19.5),
-        ]);
-
-        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([
-            Begin,
-            End,
-            Begin,
-            QuadraticTo,
-            End,
-            Begin,
-            LineTo,
-            LineTo,
-            LineTo,
-            Close,
-        ]);
+            Box::new([Begin, LineTo, LineTo, LineTo, End]);
         assert_eq!(path.verbs, expected_verbs);
     }
 }
