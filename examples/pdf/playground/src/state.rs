@@ -4,148 +4,214 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
-    #[error("invalid command: tried to convert follower to leader")]
-    TriedToConvertFollowerToLeader,
-    #[error("invalid command: tried to convert follower to follower")]
-    TriedToConvertFollowerToFollower,
-    #[error("invalid command: tried to convert leader to leader")]
-    TriedToConvertLeaderToLeader,
-    #[error("invalid command: tried to convert leader to candidate")]
-    TriedToConvertLeaderToCandidate,
-    #[error("invalid command: tried to convert candidate to candidate")]
-    TriedToConvertCandidateToCandidate,
+    #[error("invalid command: tried to convert PageDescription to PageDescription")]
+    TriedToConvertPageDescriptionToPageDescription,
+    #[error("invalid command: tried to convert PageDescription to ClippingPath")]
+    TriedToConvertPageDescriptionToClippingPath,
+    #[error("invalid command: tried to convert Text to Text")]
+    TriedToConvertTextToText,
+    #[error("invalid command: tried to convert Text to Path")]
+    TriedToConvertTextToPath,
+    #[error("invalid command: tried to convert Text to ClippingPath")]
+    TriedToConvertTextToClippingPath,
+    #[error("invalid command: tried to convert Path to Path")]
+    TriedToConvertPathToPath,
+    #[error("invalid command: tried to convert Path to Text")]
+    TriedToConvertPathToText,
+    #[error("invalid command: tried to convert ClippingPath to ClippingPath")]
+    TriedToConvertClippingPathToClippingPath,
+    #[error("invalid command: tried to convert ClippingPath to Path")]
+    TriedToConvertClippingPathToPath,
+    #[error("invalid command: tried to convert ClippingPath to Text")]
+    TriedToConvertClippingPathToText,
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum State {
-    Leader(Leader),
-    Candidate(Candidate),
-    Follower(Follower),
+    PageDescription(PageDescription),
+    Text(Text),
+    Path(Path),
+    ClippingPath(ClippingPath),
 }
 
 impl Default for State {
     fn default() -> Self { 
-        State::Follower(Follower {})
+        State::PageDescription(PageDescription {})
      }
 }
 
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct Raft {
+pub(crate) struct GraphicsState {
     // ... Shared Values
     state: State
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct Leader {
+pub(crate) struct PageDescription {
     // ... Specific State Values
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct Candidate {
+pub(crate) struct Text {
     // ... Specific State Values
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct Follower {
+pub(crate) struct Path {
     // ... Specific State Values
 }
 
-// Raft starts in the Follower state
-impl Raft {
+#[derive(Debug, PartialEq)]
+pub(crate) struct ClippingPath {
+    // ... Specific State Values
+}
+
+// Raft starts in the Path state
+impl GraphicsState {
     pub fn new(/* ... */) -> Self {
         // ...
-        Raft {
+        GraphicsState {
             // ...
             state: State::default()
         }
     }
 
-    pub fn to_leader(self) -> Result<Raft> {
+    fn to_page_description(self) -> Result<GraphicsState> {
         let result = match self.state {
-            State::Candidate(data) => {
-                Ok(Raft {
-                    state: State::Leader(convert_candidate_to_leader(data))
+            // TODO: Should this be an error or is it OK to try and turn a page_description into a page_description?
+            //       "What Would Acrobat Do?""
+            State::PageDescription(_) => {
+                Err(GraphicsStateError::TriedToConvertPageDescriptionToPageDescription.into())
+            }
+            State::Text(data) => {
+                Ok(GraphicsState {
+                    state: State::PageDescription(convert_text_to_page_description(data))
                 })
             }
-            State::Follower(_) => {
-                Err(GraphicsStateError::TriedToConvertFollowerToLeader.into())
-            }
-            // TODO: Should this be an error or is it OK to try and turn a leader into a leader?
-            //       "What Would Acrobat Do?""
-            State::Leader(_) => {
-                Err(GraphicsStateError::TriedToConvertLeaderToLeader.into())
-            }
-        }?;
-        assert!(matches!(result.state, State::Leader(_)));
-        Ok(result)
-    }
-
-    pub fn to_candidate(self) -> Result<Raft> {
-        let result = match self.state {
-            // TODO: Should this be an error or is it OK to try and turn a candidate into a candidate?
-            //       "What Would Acrobat Do?""
-            State::Candidate(_) => {
-                Err(GraphicsStateError::TriedToConvertCandidateToCandidate.into())
-            }
-            State::Follower(data) => {
-                Ok(Raft {
-                    state: State::Candidate(convert_follower_to_candidate(data))
+            State::Path(data) => {
+                Ok(GraphicsState {
+                    state: State::PageDescription(convert_path_to_page_description(data))
                 })
             }
-            State::Leader(_) => {
-                Err(GraphicsStateError::TriedToConvertLeaderToCandidate.into())
-            }
-        }?;
-        assert!(matches!(result.state, State::Candidate(_)));
-        Ok(result)
-    }
-
-    pub fn to_follower(self) -> Result<Raft> {
-        let result = match self.state {
-            State::Candidate(data) => {
-                Ok(Raft {
-                    state: State::Follower(convert_candidate_to_follower(data))
-                })
-            }
-            // TODO: Should this be an error or is it OK to try and turn a follower into a follower?
-            //       "What Would Acrobat Do?""
-            State::Follower(_) => {
-                Err(GraphicsStateError::TriedToConvertFollowerToFollower.into())
-            }
-            State::Leader(data) => {
-                Ok(Raft {
-                    state: State::Follower(convert_leader_to_follower(data))
+            State::ClippingPath(data) => {
+                Ok(GraphicsState {
+                    state: State::PageDescription(convert_clipping_path_to_page_description(data))
                 })
             }
         }?;
-        assert!(matches!(result.state, State::Follower(_)));
+        assert!(matches!(result.state, State::PageDescription(_)));
+        Ok(result)
+    }
+
+    fn to_text(self) -> Result<GraphicsState> {
+        let result = match self.state {
+            State::PageDescription(data) => {
+                Ok(GraphicsState {
+                    state: State::Text(convert_page_description_to_text(data))
+                })
+            }
+            // TODO: Should this be an error or is it OK to try and turn a text into a text?
+            //       "What Would Acrobat Do?""
+            State::Text(_) => {
+                Err(GraphicsStateError::TriedToConvertTextToText.into())
+            }
+            State::Path(_) => {
+                Err(GraphicsStateError::TriedToConvertPathToText.into())
+            }
+            State::ClippingPath(_) => {
+                Err(GraphicsStateError::TriedToConvertClippingPathToText.into())
+            }
+        }?;
+        assert!(matches!(result.state, State::Text(_)));
+        Ok(result)
+    }
+
+    fn to_path(self) -> Result<GraphicsState> {
+        let result = match self.state {
+            State::PageDescription(data) => {
+                Ok(GraphicsState {
+                    state: State::Path(convert_page_description_to_path(data))
+                })
+            }
+            State::Text(data) => {
+                Err(GraphicsStateError::TriedToConvertTextToPath.into())
+            }
+            // TODO: Should this be an error or is it OK to try and turn a path into a path?
+            //       "What Would Acrobat Do?""
+            State::Path(_) => {
+                Err(GraphicsStateError::TriedToConvertPathToPath.into())
+            }
+            State::ClippingPath(_) => {
+                Err(GraphicsStateError::TriedToConvertClippingPathToPath.into())
+            }
+        }?;
+        assert!(matches!(result.state, State::Path(_)));
+        Ok(result)
+    }
+
+    fn to_clipping_path(self) -> Result<GraphicsState> {
+        let result = match self.state {
+            State::PageDescription(_) => {
+                Err(GraphicsStateError::TriedToConvertPageDescriptionToClippingPath.into())
+            }
+            State::Text(_) => {
+                Err(GraphicsStateError::TriedToConvertTextToClippingPath.into())
+            }
+            State::Path(data) => {
+                Ok(GraphicsState {
+                    state: State::ClippingPath(convert_path_to_clipping_path(data))
+                })
+            }
+            // TODO: Should this be an error or is it OK to try and turn a path into a path?
+            //       "What Would Acrobat Do?""
+            State::ClippingPath(_) => {
+                Err(GraphicsStateError::TriedToConvertClippingPathToClippingPath.into())
+            }
+        }?;
+        assert!(matches!(result.state, State::ClippingPath(_)));
         Ok(result)
     }
 }
 
-fn convert_candidate_to_leader(data: Candidate) -> Leader {
-    Leader {}
+fn convert_text_to_page_description(data: Text) -> PageDescription {
+    PageDescription {}
 }
 
-fn convert_follower_to_candidate(data: Follower) -> Candidate {
-    Candidate {}
+fn convert_path_to_page_description(data: Path) -> PageDescription {
+    PageDescription {}
 }
 
-fn convert_candidate_to_follower(data: Candidate) -> Follower {
-    Follower {}
+fn convert_clipping_path_to_page_description(data: ClippingPath) -> PageDescription {
+    PageDescription {}
 }
 
-fn convert_leader_to_follower(data: Leader) -> Follower {
-    Follower {}
+fn convert_page_description_to_text(data: PageDescription) -> Text {
+    Text {}
+}
+
+fn convert_path_to_text(data: Path) -> Text {
+    Text {}
+}
+
+fn convert_text_to_path(data: Text) -> Path {
+    Path {}
+}
+
+fn convert_page_description_to_path(data: PageDescription) -> Path {
+    Path {}
+}
+
+fn convert_path_to_clipping_path(data: Path) -> ClippingPath {
+    ClippingPath {}
 }
 
 
 #[test]
 fn test_foo() {
-    let state = Raft::new();
-    let state = state.to_candidate().unwrap();
-    let state = state.to_leader().unwrap();
-    let state = state.to_follower().unwrap();
-    let state = state.to_candidate().unwrap();
+    let state = GraphicsState::new();
+    let state = state.to_text().unwrap();
+    let state = state.to_page_description().unwrap();
+    let state = state.to_path().unwrap();
+    let state = state.to_text().unwrap();
 }
