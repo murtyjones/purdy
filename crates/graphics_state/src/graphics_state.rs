@@ -42,7 +42,7 @@ impl Default for State {
 
 #[derive(Debug)]
 pub struct GraphicsState {
-    pub finished_paths: Vec<lyon_path::Path>,
+    pub finished_fill_paths: Vec<lyon_path::Path>,
     page_width: PageWidth,
     page_height: PageHeight,
     // ... Shared Values
@@ -99,6 +99,10 @@ impl Path {
     fn build(self) -> lyon_path::Path {
         self.builder.build()
     }
+
+    fn make_fillable_if_needed(&mut self) {
+        self.builder.make_fillable_if_needed();
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -117,7 +121,7 @@ impl GraphicsState {
     pub fn new(page_width: PageWidth, page_height: PageHeight) -> Self {
         // ...
         GraphicsState {
-            finished_paths: vec![],
+            finished_fill_paths: vec![],
             page_width,
             page_height,
             // ...
@@ -137,14 +141,16 @@ impl GraphicsState {
         Ok(())
     }
 
-    pub fn close(&mut self) -> Result<()> {
+    pub fn fill(&mut self) -> Result<()> {
         self.to_path()?;
         let w = self.page_width;
         let h = self.page_height;
         let mut p = std::mem::replace(self.as_path()?, Path::new(w, h));
         p.close();
+        p.make_fillable_if_needed();
         let path = p.build();
-        self.finished_paths.push(path);
+        self.finished_fill_paths.push(path);
+        self.to_page_description()?;
         Ok(())
     }
 

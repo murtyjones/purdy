@@ -147,7 +147,7 @@ impl Pdf {
     }
 
     /// For any single linetos ending with a fill, makes them rectangles that can be filled
-    fn make_fillable_if_needed(&mut self) {
+    pub fn make_fillable_if_needed(&mut self) {
         let mut points = self.points.iter().enumerate();
         let mut lineto_insertions = vec![];
         let mut point_replacements = vec![];
@@ -219,12 +219,6 @@ impl Build for Pdf {
         self.end_if_needed();
         // TODO: Implement validator
         // self.validator.build();
-        // TODO: Since we don't know at this point in the code whether or not there will be a fill,
-        //       we should probably move this call up higher in the code
-        //       IDEA: At the time we close a given path, if it's a fill and has just one LineTo,
-        //             then invoke the method for just the last three verbs and their points. This
-        //             should also improve runtime
-        self.make_fillable_if_needed();
 
         Path {
             points: self.points.into_boxed_slice(),
@@ -262,6 +256,8 @@ mod test {
         let h = PageHeight::new(800.0);
         let mut pdf = Pdf::new(w, h);
         pdf.line_to(vector(10.0, 10.0));
+        pdf.close();
+        pdf.make_fillable_if_needed();
         let path = pdf.build();
 
         let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
@@ -273,7 +269,7 @@ mod test {
             point(-399.64645, 400.35355),
         ]);
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([Begin, LineTo, LineTo, LineTo, End]);
+        let expected_verbs: Box<[Verb]> = Box::new([Begin, LineTo, LineTo, LineTo, Close]);
         assert_eq!(path.verbs, expected_verbs);
     }
 }

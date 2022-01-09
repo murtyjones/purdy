@@ -97,28 +97,25 @@ fn main() {
     let width = PageWidth::new(DEFAULT_WINDOW_WIDTH);
     let height = PageHeight::new(DEFAULT_WINDOW_HEIGHT);
     let mut graphics_state = GraphicsState::new(width, height);
-    let mut should_fill = false;
-    let mut should_stroke = false;
     for inst in draw_instructions {
         match inst {
             StreamObject::Text(_) => unimplemented!(),
             StreamObject::CapStyle(_) => unimplemented!(),
             StreamObject::MoveTo(p) => {
-                graphics_state.move_to(p);
+                graphics_state.move_to(p).unwrap();
             }
             StreamObject::LineTo(p) => {
-                graphics_state.line_to(p);
+                graphics_state.line_to(p).unwrap();
             }
             StreamObject::Fill => {
-                should_fill = true;
+                graphics_state.fill().unwrap();
             }
             StreamObject::Stroke => {
-                should_stroke = true;
             }
         }
     }
-    graphics_state.close().unwrap();
-    let path = graphics_state.finished_paths.get(0).unwrap();
+
+    let path = graphics_state.finished_fill_paths.get(0).unwrap();
 
     // Set to 1 to disable
     let sample_count = 1;
