@@ -242,7 +242,9 @@ mod test {
 
     #[test]
     fn test_converts_single_line_to_rect() {
-        let mut pdf = Pdf::new(800.0, 800.0);
+        let w = PageWidth::new(800.0);
+        let h = PageHeight::new(800.0);
+        let mut pdf = Pdf::new(w, h);
         pdf.line_to(vector(10.0, 10.0));
         let path = pdf.build();
 
