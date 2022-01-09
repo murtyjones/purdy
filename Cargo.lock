@@ -1039,6 +1039,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphics_state"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lyon_geom",
+ "lyon_path",
+ "shared",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1330,6 +1341,7 @@ dependencies = [
  "approx",
  "lyon_geom",
  "serde",
+ "shared",
 ]
 
 [[package]]
@@ -1815,14 +1827,13 @@ checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
 name = "playground"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "bytemuck",
  "futures",
+ "graphics_state",
  "image",
  "lyon",
  "pdf",
  "png",
- "thiserror",
  "wgpu",
 ]
 
@@ -2248,6 +2259,10 @@ dependencies = [
  "freetype-sys",
  "pkg-config",
 ]
+
+[[package]]
+name = "shared"
+version = "0.1.0"
 
 [[package]]
 name = "simplecss"

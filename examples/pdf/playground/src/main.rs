@@ -7,6 +7,7 @@ use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
+use graphics_state::{GraphicsState, PageWidth, PageHeight};
 use std::io::Write;
 
 // For create_buffer_init()
@@ -19,8 +20,6 @@ const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
 
-mod graphics_state;
-pub use graphics_state::*;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -95,10 +94,9 @@ fn main() {
     };
     let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
     let draw_instructions = drawing.as_stream().unwrap().get_content().unwrap();
-    let mut graphics_state = GraphicsState::new(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
-    let mut builder = Pdf::new(
-        DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
-    );
+    let width = PageWidth::new(DEFAULT_WINDOW_WIDTH);
+    let height = PageHeight::new(DEFAULT_WINDOW_HEIGHT);
+    let mut graphics_state = GraphicsState::new(width, height);
     let mut should_fill = false;
     let mut should_stroke = false;
     for inst in draw_instructions {

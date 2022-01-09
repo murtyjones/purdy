@@ -16,7 +16,8 @@ name = "lyon_path"
 serialization = ["serde", "lyon_geom/serialization"]
 
 [dependencies]
-lyon_geom = { version = "0.17.0", path = "../geom" }
+lyon_geom = { path = "../geom" }
+shared = { path = "../shared" }
 serde = { version = "1.0", optional = true, features = ["serde_derive"] }
 
 [dev-dependencies]

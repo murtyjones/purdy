@@ -6,7 +6,8 @@ use crate::{
     Attributes, EndpointId, Path,
 };
 use lyon_geom::{vector, LineSegment};
-use std::{borrow::BorrowMut, convert::TryInto};
+use shared::{PageHeight, PageWidth};
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct Pdf {
@@ -14,12 +15,12 @@ pub struct Pdf {
     pub(crate) verbs: Vec<Verb>,
     first_position: Point,
     current_position: Point,
-    page_width: f32,
-    page_height: f32,
+    page_width: PageWidth,
+    page_height: PageHeight,
 }
 
 impl Pdf {
-    pub fn new(page_width: f32, page_height: f32) -> Self {
+    pub fn new(page_width: PageWidth, page_height: PageHeight) -> Self {
         let mut p = Pdf {
             points: vec![],
             verbs: vec![],
@@ -237,13 +238,13 @@ impl Build for Pdf {
 mod test {
     use super::*;
     use crate::{path::Verb::*, test_utils::assert_relative_eq_boxed_pt_slice};
-    use lyon_geom::{
-        euclid::{Point2D, UnknownUnit}
-    };
+    use lyon_geom::euclid::{Point2D, UnknownUnit};
 
     #[test]
     fn test_converts_single_line_to_rect() {
-        let mut pdf = Pdf::new(800.0, 800.0);
+        let w = PageWidth::new(800.0);
+        let h = PageHeight::new(800.0);
+        let mut pdf = Pdf::new(w, h);
         pdf.line_to(vector(10.0, 10.0));
         let path = pdf.build();
 
@@ -253,11 +254,10 @@ mod test {
             // LineTo:
             point(-390.35355, 389.64645),
             point(-400.35355, 399.64645),
-            point(-399.64645, 400.35355)
+            point(-399.64645, 400.35355),
         ]);
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> =
-            Box::new([Begin, LineTo, LineTo, LineTo, End]);
+        let expected_verbs: Box<[Verb]> = Box::new([Begin, LineTo, LineTo, LineTo, End]);
         assert_eq!(path.verbs, expected_verbs);
     }
 }

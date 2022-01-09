@@ -1,8 +1,9 @@
 use anyhow::{Result, Ok};
+use lyon_path::math::Vector;
 use thiserror::Error;
-use lyon::path::pdf::Pdf;
-use lyon::math::Vector;
-use lyon::path::builder::Build;
+use lyon_path::pdf::Pdf;
+use lyon_path::builder::Build;
+use shared::{PageWidth, PageHeight};
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
@@ -41,9 +42,9 @@ impl Default for State {
 
 #[derive(Debug)]
 pub struct GraphicsState {
-    pub(crate) finished_paths: Vec<lyon::path::Path>,
-    page_width: f32,
-    page_height: f32,
+    pub finished_paths: Vec<lyon_path::Path>,
+    page_width: PageWidth,
+    page_height: PageHeight,
     // ... Shared Values
     state: State
 }
@@ -77,7 +78,7 @@ struct Path {
 }
 
 impl Path {
-    fn new(page_width: f32, page_height: f32) -> Self {
+    fn new(page_width: PageWidth, page_height: PageHeight) -> Self {
         Path {
             builder: Pdf::new(page_width, page_height)
         }
@@ -95,7 +96,7 @@ impl Path {
         self.builder.close();
     }
     
-    fn build(self) -> lyon::path::Path {
+    fn build(self) -> lyon_path::Path {
         self.builder.build()
     }
 }
@@ -113,7 +114,7 @@ impl Default for ClippingPath {
 
 // Raft starts in the Path state
 impl GraphicsState {
-    pub fn new(page_width: f32, page_height: f32) -> Self {
+    pub fn new(page_width: PageWidth, page_height: PageHeight) -> Self {
         // ...
         GraphicsState {
             finished_paths: vec![],
@@ -257,7 +258,7 @@ fn convert_path_to_text(data: &Path) -> Text {
     Text::default()
 }
 
-fn convert_page_description_to_path(page_width: f32, page_height: f32, data: &PageDescription) -> Path {
+fn convert_page_description_to_path(page_width: PageWidth, page_height: PageHeight, data: &PageDescription) -> Path {
     Path::new(page_width, page_height)
 }
 
