@@ -241,6 +241,22 @@ mod test {
     use lyon_geom::euclid::{Point2D, UnknownUnit};
 
     #[test]
+    fn test_empty_path() {
+        let w = PageWidth::new(800.0);
+        let h = PageHeight::new(800.0);
+        let mut pdf = Pdf::new(w, h);
+        let path = pdf.build();
+
+        let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
+            // MoveTo:
+            point(-400.0, 400.0),
+        ]);
+        assert_relative_eq_boxed_pt_slice(path.points, expected_points);
+        let expected_verbs: Box<[Verb]> = Box::new([Begin, End]);
+        assert_eq!(path.verbs, expected_verbs);
+    }
+
+    #[test]
     fn test_converts_single_line_to_rect() {
         let w = PageWidth::new(800.0);
         let h = PageHeight::new(800.0);
