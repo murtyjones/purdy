@@ -115,8 +115,6 @@ fn main() {
         }
     }
 
-    let path = graphics_state.finished_fill_paths.get(0).unwrap();
-
     // Set to 1 to disable
     let sample_count = 1;
 
@@ -131,13 +129,16 @@ fn main() {
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
 
-    fill_tess
-        .tessellate_path(
-            path,
-            &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-            &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
-        )
-        .unwrap();
+    graphics_state.finished_fill_paths.iter().for_each(|path| {
+        fill_tess
+            .tessellate_path(
+                path,
+                &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
+                &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
+            )
+            .unwrap();
+    });
+
 
     let fill_range = 0..(geometry.indices.len() as u32);
 
