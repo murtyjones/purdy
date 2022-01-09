@@ -8,6 +8,8 @@ members = [
     "crates/geom",
     "crates/extra",
     "crates/pdf",
+    "crates/graphics_state",
+    "crates/shared",
     "cli",
     "wasm_test",
     "examples/wgpu",
