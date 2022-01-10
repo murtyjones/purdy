@@ -179,15 +179,13 @@ endobj
 11 0 obj
 << /Length 19 >>
 stream
-% Line:
-510 500 m
-610 600 l
-% Line:
-500 500 m
-600 600 l
-% Zero length line:
+% Zero-length, zero-area line
 10 10 m
 10 10 l
+f
+% Zero-area line
+20 10 m
+20 20 l
 f
 endstream
 endobj
