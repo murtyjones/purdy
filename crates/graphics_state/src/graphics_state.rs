@@ -7,20 +7,8 @@ use shared::{PageWidth, PageHeight};
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
-    #[error("invalid command: tried to convert PageDescription to ClippingPath")]
-    TriedToConvertPageDescriptionToClippingPath,
-    #[error("invalid command: tried to convert Text to Text")]
-    TriedToConvertTextToText,
-    #[error("invalid command: tried to convert Text to Path")]
-    TriedToConvertTextToPath,
-    #[error("invalid command: tried to convert Text to ClippingPath")]
-    TriedToConvertTextToClippingPath,
-    #[error("invalid command: tried to convert Path to Text")]
-    TriedToConvertPathToText,
-    #[error("invalid command: tried to convert ClippingPath to Path")]
-    TriedToConvertClippingPathToPath,
-    #[error("invalid command: tried to convert ClippingPath to Text")]
-    TriedToConvertClippingPathToText,
+    #[error("invalid state transition: tried to convert {0} to {1}")]
+    InvalidStateTransition(&'static str, &'static str),
     #[error("invalid attempt to access Path state while not in Path mode")]
     InvalidAttemptToAccessPathGraphicsState,
 }
@@ -112,7 +100,7 @@ struct ClippingPath {
 
 impl Default for ClippingPath {
     fn default() -> Self {
-        ClippingPath::default()
+        ClippingPath {}
     }
 }
 
@@ -193,10 +181,10 @@ impl GraphicsState {
                 Ok(())
             }
             State::Path(_) => {
-                Err(GraphicsStateError::TriedToConvertPathToText.into())
+                Err(GraphicsStateError::InvalidStateTransition("Path", "Text").into())
             }
             State::ClippingPath(_) => {
-                Err(GraphicsStateError::TriedToConvertClippingPathToText.into())
+                Err(GraphicsStateError::InvalidStateTransition("ClippingPath", "Text").into())
             }
         }?;
         assert!(matches!(self.state, State::Text(_)));
@@ -210,13 +198,13 @@ impl GraphicsState {
                 Ok(())
             }
             State::Text(_) => {
-                Err(GraphicsStateError::TriedToConvertTextToPath.into())
+                Err(GraphicsStateError::InvalidStateTransition("Text", "Path").into())
             }
             State::Path(_) => {
                 Ok(())
             }
             State::ClippingPath(_) => {
-                Err(GraphicsStateError::TriedToConvertClippingPathToPath.into())
+                Err(GraphicsStateError::InvalidStateTransition("ClippingPath", "Path").into())
             }
         }?;
         assert!(matches!(self.state, State::Path(_)));
@@ -226,10 +214,10 @@ impl GraphicsState {
     fn to_clipping_path(&mut self) -> Result<()> {
         let result = match &self.state {
             State::PageDescription(_) => {
-                Err(GraphicsStateError::TriedToConvertPageDescriptionToClippingPath.into())
+                Err(GraphicsStateError::InvalidStateTransition("PageDescription", "ClippingPath").into())
             }
             State::Text(_) => {
-                Err(GraphicsStateError::TriedToConvertTextToClippingPath.into())
+                Err(GraphicsStateError::InvalidStateTransition("ClippingPath", "Text").into())
             }
             State::Path(data) => {
                 self.state = State::ClippingPath(convert_path_to_clipping_path(&data));
