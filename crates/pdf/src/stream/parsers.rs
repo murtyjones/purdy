@@ -93,10 +93,19 @@ fn cap_style(input: &[u8]) -> NomResult<LineCap> {
 
 fn move_to(input: &[u8]) -> NomResult<Vector<f32>> {
     map(
-        terminated(tuple((ws(int1::<u32>), ws(int1::<u32>))), ws(char('m'))),
-        // TODO: any issue with number overflow?
-        |(x, y)| vector(x as f32, y as f32),
+        terminated(tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))), ws(char('m'))),
+        |(x, y)| vector(x, y),
     )(input)
+}
+
+#[test]
+fn test_move_to() {
+    assert_eq!(vector(1.23, 1.23), move_to(&"1.23 1.23 m".as_bytes()).unwrap().1);
+    assert_eq!(vector(1.00, 1.23), move_to(&"1 +1.23 m".as_bytes()).unwrap().1);
+    assert_eq!(vector(1.00, -1.23), move_to(&"1 -1.23 m".as_bytes()).unwrap().1);
+    assert_eq!(vector(-1.23, -1.24), move_to(&"+-+1.23 --1.24 m".as_bytes()).unwrap().1);
+    assert_eq!(vector(-10.0, 1.24), move_to(&"+-+10 ++1.24 m".as_bytes()).unwrap().1);
+    assert_eq!(vector(-10.0, -1.0), move_to(&"-----10 +-+1 m".as_bytes()).unwrap().1);
 }
 
 fn number_forced_to_f32(input: &[u8]) -> NomResult<f32> {
@@ -144,7 +153,7 @@ fn line_to(input: &[u8]) -> NomResult<Vector<f32>> {
 }
 
 #[test]
-fn test_line() {
+fn test_line_to() {
     assert_eq!(vector(1.23, 1.23), line_to(&"1.23 1.23 l".as_bytes()).unwrap().1);
     assert_eq!(vector(1.00, 1.23), line_to(&"1 +1.23 l".as_bytes()).unwrap().1);
     assert_eq!(vector(1.00, -1.23), line_to(&"1 -1.23 l".as_bytes()).unwrap().1);
