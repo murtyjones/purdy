@@ -24,7 +24,6 @@ impl Pdf {
         let mut p = Pdf {
             points: vec![],
             verbs: vec![],
-            // TODO: start at bottom left of page, I think
             first_position: point(-page_width / 2.0, page_height / 2.0),
             current_position: point(-page_width / 2.0, page_height / 2.0),
             page_width,
