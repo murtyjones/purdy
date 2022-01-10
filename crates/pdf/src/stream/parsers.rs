@@ -109,23 +109,31 @@ fn number_forced_to_f32(input: &[u8]) -> NomResult<f32> {
 }
 
 fn integer(input: &[u8]) -> NomResult<i64> {
-    let (i, _) = pair(opt(one_of("+-")), digit1)(input)?;
+    let (rest, (pluses_minuses, _)) = pair(opt(many1(one_of("+-"))), digit1)(input)?;
+    let number_of_pluses_minuses = pluses_minuses.as_ref().unwrap_or(&vec![]).len();
+    let contains_minus = pluses_minuses.as_ref().unwrap_or(&vec![]).contains(&'-');
 
-    let int_input = &input[..input.len() - i.len()];
-    convert_result(i64::from_str(std::str::from_utf8(int_input).unwrap()), i, ErrorKind::Digit)
+    let unsigned_int = &input[number_of_pluses_minuses..input.len() - rest.len()];
+    let plus_minus = &[(if contains_minus { b'-' } else { b'+' })];
+    let final_number: Vec<u8> = [plus_minus, unsigned_int].concat();
+    convert_result(i64::from_str(std::str::from_utf8(&final_number).unwrap()), rest, ErrorKind::Digit)
 }
 
 fn real(input: &[u8]) -> NomResult<f32> {
-    let (i, _) = pair(
-        opt(one_of("+-")),
+    let (rest, (pluses_minuses, _)) = pair(
+        opt(many1(one_of("+-"))),
         alt((
             map(tuple((digit1, tag(b"."), digit0)), |_| ()),
             map(pair(tag(b"."), digit1), |_| ()),
         )),
     )(input)?;
-
-    let float_input = &input[..input.len() - i.len()];
-    convert_result(f32::from_str(std::str::from_utf8(float_input).unwrap()), i, ErrorKind::Digit)
+    let number_of_pluses_minuses = pluses_minuses.as_ref().unwrap_or(&vec![]).len();
+    let contains_minus = pluses_minuses.as_ref().unwrap_or(&vec![]).contains(&'-');
+    
+    let unsigned_float = &input[number_of_pluses_minuses..input.len() - rest.len()];
+    let plus_minus = &[(if contains_minus { b'-' } else { b'+' })];
+    let final_number: Vec<u8> = [plus_minus, unsigned_float].concat();
+    convert_result(f32::from_str(std::str::from_utf8(&final_number).unwrap()), rest, ErrorKind::Digit)
 }
 
 fn line_to(input: &[u8]) -> NomResult<Vector<f32>> {
@@ -140,8 +148,9 @@ fn test_line() {
     assert_eq!(vector(1.23, 1.23), line_to(&"1.23 1.23 l".as_bytes()).unwrap().1);
     assert_eq!(vector(1.00, 1.23), line_to(&"1 +1.23 l".as_bytes()).unwrap().1);
     assert_eq!(vector(1.00, -1.23), line_to(&"1 -1.23 l".as_bytes()).unwrap().1);
-    // FIXME: Handle this case which should be valid:
-    // assert_eq!(vector(1.00, -1.23), line_to(&"1 --1.23 l".as_bytes()).unwrap().1);
+    assert_eq!(vector(-1.23, -1.24), line_to(&"+-+1.23 --1.24 l".as_bytes()).unwrap().1);
+    assert_eq!(vector(-10.0, 1.24), line_to(&"+-+10 ++1.24 l".as_bytes()).unwrap().1);
+    assert_eq!(vector(-10.0, -1.0), line_to(&"-----10 +-+1 l".as_bytes()).unwrap().1);
 }
 
 fn stroke(input: &[u8]) -> NomResult<()> {
