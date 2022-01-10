@@ -162,6 +162,25 @@ fn test_line_to() {
     assert_eq!(vector(-10.0, -1.0), line_to(&"-----10 +-+1 l".as_bytes()).unwrap().1);
 }
 
+fn rect(input: &[u8]) -> NomResult<(Vector<f32>, f32, f32)> {
+    map(
+        terminated(tuple((
+            ws(number_forced_to_f32), 
+            ws(number_forced_to_f32),
+            ws(number_forced_to_f32), 
+            ws(number_forced_to_f32)
+        )), ws(tag("re"))),
+        |(x, y, w, h)| {
+            (vector(x, y), w, h)
+        },
+    )(input)
+}
+
+#[test]
+fn test_rect() {
+    assert_eq!((vector(100.0, 101.0), 102.0, 0.0), rect(&"100 101 102 0 re".as_bytes()).unwrap().1);
+}
+
 fn stroke(input: &[u8]) -> NomResult<()> {
     map(ws(char('S')), |_| ())(input)
 }
@@ -176,6 +195,7 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(cap_style, StreamObject::CapStyle),
         map(move_to, StreamObject::MoveTo),
         map(line_to, StreamObject::LineTo),
+        map(rect, |(low_left, width, height)| StreamObject::Rect(low_left, width, height)),
         map(stroke, |_| StreamObject::Stroke),
         map(fill, |_| StreamObject::Fill),
     )))(input)

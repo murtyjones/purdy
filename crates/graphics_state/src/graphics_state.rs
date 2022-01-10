@@ -80,6 +80,10 @@ impl Path {
         self.builder.line_to(to);
     }
     
+    fn rect(&mut self, low_left: Vector, width: f32, height: f32) {
+        self.builder.rect(low_left, width, height);
+    }
+    
     fn close(&mut self) {
         self.builder.close();
     }
@@ -126,6 +130,12 @@ impl GraphicsState {
     pub fn line_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
         self.as_path()?.line_to(to);
+        Ok(())
+    }
+
+    pub fn rect(&mut self, low_left: Vector, width: f32, height: f32) -> Result<()> {
+        self.to_path()?;
+        self.as_path()?.rect(low_left, width, height);
         Ok(())
     }
 

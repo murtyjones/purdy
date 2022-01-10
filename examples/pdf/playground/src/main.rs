@@ -107,6 +107,9 @@ fn main() {
             StreamObject::LineTo(p) => {
                 graphics_state.line_to(p).unwrap();
             }
+            StreamObject::Rect(low_left, width, height) => {
+                graphics_state.rect(low_left, width, height).unwrap();
+            }
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
             }

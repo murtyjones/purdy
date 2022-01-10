@@ -1,11 +1,11 @@
 use crate::{
     builder::nan_check,
-    math::{point, Point, Vector},
+    math::{point, vector, Point, Vector},
     path::Verb,
     traits::Build,
     Attributes, EndpointId, Path,
 };
-use lyon_geom::{vector, LineSegment};
+use lyon_geom::LineSegment;
 use shared::{PageHeight, PageWidth};
 use std::convert::TryInto;
 
@@ -107,6 +107,18 @@ impl Pdf {
         self.verbs.push(Verb::LineTo);
 
         id
+    }
+
+    pub fn rect(&mut self, low_left: Vector, width: f32, height: f32) {
+        let width = f32::max(width, 1.0);
+        let height = f32::max(height, 1.0);
+        self.move_to(low_left);
+        let to = vector(low_left.x + width, low_left.y);
+        self.line_to(to);
+        let to = vector(low_left.x + width, low_left.y + height);
+        self.line_to(to);
+        let to = vector(low_left.x, low_left.y + height);
+        self.line_to(to);
     }
 
     pub fn close(&mut self) {

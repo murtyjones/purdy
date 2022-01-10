@@ -187,6 +187,9 @@ f
 20 10 m
 20 20 l
 f
+% Zero-width rect
+30 10 0 10 re
+f
 endstream
 endobj
 

@@ -39,6 +39,7 @@ pub enum StreamObject<'a> {
     CapStyle(LineCap),
     MoveTo(Vector<f32>),
     LineTo(Vector<f32>),
+    Rect(Vector<f32>, f32, f32),
     Stroke,
     Fill,
 }
