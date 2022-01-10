@@ -5,7 +5,7 @@ use crate::{
     stream::{Stream, TextContent},
     utils::{_name, _real, hex_char2, int1, take_until_unmatched, ws},
     xref::{Xref, XrefEntry},
-    ObjectId, ObjectNumber, ParseResult,
+    ObjectId, ObjectNumber, NomResult,
 };
 use anyhow::Result;
 use std::{collections::BTreeMap, str::from_utf8};
@@ -32,7 +32,7 @@ use nom::{
 
 use super::Document;
 
-pub fn version(input: &[u8]) -> ParseResult<f64> {
+pub fn version(input: &[u8]) -> NomResult<f64> {
     context(
         "PDF Version",
         tuple((tag("%"), tag("PDF"), tag("-"), double)),
@@ -65,7 +65,7 @@ fn minus(input: u8) -> bool {
     b"-".contains(&input)
 }
 
-fn eol(input: &[u8]) -> ParseResult<&[u8]> {
+fn eol(input: &[u8]) -> NomResult<&[u8]> {
     alt((tag(b"\r\n"), tag(b"\n"), tag("\r")))(input)
 }
 
@@ -74,21 +74,21 @@ fn to_nom<O, E>(
     result: std::result::Result<O, E>,
     input: &[u8],
     error_kind: ErrorKind,
-) -> ParseResult<O> {
+) -> NomResult<O> {
     result
         .map(|o| (input, o))
         .map_err(|_| nom::Err::Error(nom::error::ParseError::from_error_kind(input, error_kind)))
 }
 
-pub fn integer(input: &[u8]) -> ParseResult<Object> {
+pub fn integer(input: &[u8]) -> NomResult<Object> {
     map(_integer, Object::Integer)(input)
 }
 
-pub fn _integer(input: &[u8]) -> ParseResult<i64> {
+pub fn _integer(input: &[u8]) -> NomResult<i64> {
     ws(int1::<i64>)(input)
 }
 
-fn real(input: &[u8]) -> ParseResult<Object> {
+fn real(input: &[u8]) -> NomResult<Object> {
     map(ws(_real::<f64>), Object::Real)(input)
 }
 
@@ -180,7 +180,7 @@ fn find_all_object_ids(input: &'static [u8]) -> Result<Vec<(ObjectId, usize)>> {
     Ok(objects)
 }
 
-fn take_till_digit(input: &'static [u8]) -> ParseResult<&[u8]> {
+fn take_till_digit(input: &'static [u8]) -> NomResult<&[u8]> {
     take_till(is_digit)(input)
 }
 
@@ -212,11 +212,11 @@ fn assert_all_xref_entry_offsets_are_accurate<'a, 'b>(
     Ok(())
 }
 
-fn object_beginning(input: &[u8]) -> ParseResult<ObjectId> {
+fn object_beginning(input: &[u8]) -> NomResult<ObjectId> {
     terminated(pair(ws(int1::<u32>), ws(int1::<u16>)), ws(tag(b"obj")))(input)
 }
 
-fn final_xref_offset(input: &[u8]) -> ParseResult<usize> {
+fn final_xref_offset(input: &[u8]) -> NomResult<usize> {
     let go_to_startxref = take_until("startxref");
     let startxref = ws(tag("startxref"));
     // Depending how early in the file we are, there may be multiple `startxref`
@@ -226,7 +226,7 @@ fn final_xref_offset(input: &[u8]) -> ParseResult<usize> {
     Ok((input, final_startxref))
 }
 
-fn input_from_final_trailer_onwards(input: &[u8]) -> ParseResult<()> {
+fn input_from_final_trailer_onwards(input: &[u8]) -> NomResult<()> {
     // Depending how early in the file we are, there may be multiple `trailer`
     // entries. We will only take the last one
     map(
@@ -235,7 +235,7 @@ fn input_from_final_trailer_onwards(input: &[u8]) -> ParseResult<()> {
     )(input)
 }
 
-fn xref(input: &[u8]) -> ParseResult<Xref> {
+fn xref(input: &[u8]) -> NomResult<Xref> {
     let mut xref = Xref::new();
     let (input, _) = ws(tag("xref"))(input)?;
     let (input, starting_object_number) = ws(int1::<u32>)(input)?;
@@ -264,44 +264,44 @@ fn xref(input: &[u8]) -> ParseResult<Xref> {
     Ok((input, xref))
 }
 
-fn trailer(input: &'static [u8]) -> ParseResult<Dictionary<'_>> {
+fn trailer(input: &'static [u8]) -> NomResult<Dictionary<'_>> {
     let (input, _) = ws(tag("trailer"))(input)?;
     _dictionary(input)
 }
 
-fn object(input: &'static [u8]) -> ParseResult<(ObjectId, Object<'_>)> {
+fn object(input: &'static [u8]) -> NomResult<(ObjectId, Object<'_>)> {
     map(
         tuple((object_id, ws(tag("obj")), object_body)),
         |(id, _, object)| (id, object),
     )(input)
 }
 
-fn object_body(input: &'static [u8]) -> ParseResult<Object<'_>> {
+fn object_body(input: &'static [u8]) -> NomResult<Object<'_>> {
     alt((
         reference, null, real, integer, name, boolean, stream, dictionary, array, string,
     ))(input)
 }
 
-fn array(input: &'static [u8]) -> ParseResult<Object<'_>> {
+fn array(input: &'static [u8]) -> NomResult<Object<'_>> {
     map(_array, Object::Array)(input)
 }
 
-fn _array(input: &'static [u8]) -> ParseResult<Vec<Object<'_>>> {
+fn _array(input: &'static [u8]) -> NomResult<Vec<Object<'_>>> {
     delimited(ws(char('[')), many0(object_body), ws(char(']')))(input)
 }
 
-fn string(input: &[u8]) -> ParseResult<Object<'_>> {
+fn string(input: &[u8]) -> NomResult<Object<'_>> {
     map(_string, |(a, b)| Object::String(a, b))(input)
 }
 
-fn _string(input: &[u8]) -> ParseResult<(Vec<u8>, StringFormat)> {
+fn _string(input: &[u8]) -> NomResult<(Vec<u8>, StringFormat)> {
     alt((
         map(ws(string_literal), |s| (s, StringFormat::Literal)),
         map(ws(string_hex), |s| (s, StringFormat::Hexadecimal)),
     ))(input)
 }
 
-fn string_literal(input: &[u8]) -> ParseResult<Vec<u8>> {
+fn string_literal(input: &[u8]) -> NomResult<Vec<u8>> {
     let (rest, raw) = delimited(
         ws(char('(')),
         take_until_unmatched(b"(", b")"),
@@ -335,7 +335,7 @@ fn string_literal(input: &[u8]) -> ParseResult<Vec<u8>> {
     Ok((rest, result))
 }
 
-fn string_hex(input: &[u8]) -> ParseResult<Vec<u8>> {
+fn string_hex(input: &[u8]) -> NomResult<Vec<u8>> {
     let (rest, raw) = delimited(
         ws(char('<')),
         take_until_unmatched(b"<", b">"),
@@ -357,11 +357,11 @@ fn string_hex(input: &[u8]) -> ParseResult<Vec<u8>> {
     Ok((rest, result))
 }
 
-fn stream(input: &'static [u8]) -> ParseResult<Object<'_>> {
+fn stream(input: &'static [u8]) -> NomResult<Object<'_>> {
     map(_stream, Object::Stream)(input)
 }
 
-fn _stream(input: &'static [u8]) -> ParseResult<Stream<'_>> {
+fn _stream(input: &'static [u8]) -> NomResult<Stream<'_>> {
     map(tuple((_dictionary, stream_body)), |(dict, content)| {
         Stream {
             dict,
@@ -373,7 +373,7 @@ fn _stream(input: &'static [u8]) -> ParseResult<Stream<'_>> {
     })(input)
 }
 
-fn stream_body(input: &[u8]) -> ParseResult<&[u8]> {
+fn stream_body(input: &[u8]) -> NomResult<&[u8]> {
     delimited(
         ws(tag("stream")),
         take_until("endstream"),
@@ -381,11 +381,11 @@ fn stream_body(input: &[u8]) -> ParseResult<&[u8]> {
     )(input)
 }
 
-fn dictionary(input: &'static [u8]) -> ParseResult<Object<'_>> {
+fn dictionary(input: &'static [u8]) -> NomResult<Object<'_>> {
     map(_dictionary, Object::Dictionary)(input)
 }
 
-fn _dictionary(input: &'static [u8]) -> ParseResult<Dictionary<'_>> {
+fn _dictionary(input: &'static [u8]) -> NomResult<Dictionary<'_>> {
     let (rest_outer, raw_dict) = delimited(
         ws(tag("<<")),
         take_until_unmatched(b"<<", b">>"),
@@ -407,7 +407,7 @@ fn _dictionary(input: &'static [u8]) -> ParseResult<Dictionary<'_>> {
     Ok((rest_outer, dictionary))
 }
 
-fn hex_char1(input: &[u8]) -> ParseResult<u8> {
+fn hex_char1(input: &[u8]) -> NomResult<u8> {
     map_res(
         verify(take(1usize), |h: &[u8]| h.iter().cloned().all(is_hex_digit)),
         // According to the PDF spec, "If the final digit of a hexidecimal string is missing–that
@@ -417,45 +417,45 @@ fn hex_char1(input: &[u8]) -> ParseResult<u8> {
     )(input)
 }
 
-fn octal_char3(input: &[u8]) -> ParseResult<char> {
+fn octal_char3(input: &[u8]) -> NomResult<char> {
     map(
         verify(take(3usize), |h: &[u8]| h.iter().cloned().all(is_oct_digit)),
         |x| u8::from_str_radix(from_utf8(x).unwrap(), 8).unwrap() as char,
     )(input)
 }
 
-fn octal_char2(input: &[u8]) -> ParseResult<char> {
+fn octal_char2(input: &[u8]) -> NomResult<char> {
     map(
         verify(take(2usize), |h: &[u8]| h.iter().cloned().all(is_oct_digit)),
         |x| u8::from_str_radix(from_utf8(x).unwrap(), 8).unwrap() as char,
     )(input)
 }
 
-fn octal_char1(input: &[u8]) -> ParseResult<char> {
+fn octal_char1(input: &[u8]) -> NomResult<char> {
     map(
         verify(take(1usize), |h: &[u8]| h.iter().cloned().all(is_oct_digit)),
         |x| u8::from_str_radix(from_utf8(x).unwrap(), 8).unwrap() as char,
     )(input)
 }
 
-fn name(input: &[u8]) -> ParseResult<Object<'_>> {
+fn name(input: &[u8]) -> NomResult<Object<'_>> {
     map(_name, Object::Name)(input)
 }
 
-fn object_id(input: &[u8]) -> ParseResult<ObjectId> {
+fn object_id(input: &[u8]) -> NomResult<ObjectId> {
     pair(ws(int1), ws(int1))(input)
 }
 
-fn reference(input: &[u8]) -> ParseResult<Object> {
+fn reference(input: &[u8]) -> NomResult<Object> {
     map(terminated(object_id, ws(tag(b"R"))), Object::Reference)(input)
 }
 
-fn null(input: &[u8]) -> ParseResult<Object> {
+fn null(input: &[u8]) -> NomResult<Object> {
     let parser = ws(tag_no_case(b"null"));
     map(parser, |_| Object::Null)(input)
 }
 
-fn boolean(input: &[u8]) -> ParseResult<Object> {
+fn boolean(input: &[u8]) -> NomResult<Object> {
     alt((
         map(ws(tag_no_case(b"true")), |_| Object::Boolean(true)),
         map(ws(tag_no_case(b"false")), |_| Object::Boolean(false)),
@@ -469,7 +469,7 @@ mod tests {
 
     use super::*;
 
-    fn strip<T>(result: ParseResult<'static, T>) -> T {
+    fn strip<T>(result: NomResult<'static, T>) -> T {
         strip_nom(result).unwrap()
     }
 

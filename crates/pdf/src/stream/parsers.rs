@@ -1,28 +1,38 @@
 use lyon_geom::{vector, Vector};
 use lyon_path::LineCap;
-
+use shared::NumberError;
+use anyhow::Error;
+use std::str::FromStr;
 use nom::{
     branch::alt,
     bytes::complete::tag,
     bytes::complete::take_until,
-    character::complete::char,
+    character::complete::{char, one_of, digit0, digit1},
     character::streaming::multispace0,
     combinator::{map, map_opt, map_res, opt},
-    error::ParseError,
+    error::{ErrorKind, ParseError},
     multi::{many0, many1},
-    sequence::{delimited, terminated, tuple},
+    sequence::{delimited, pair, terminated, tuple},
 };
+use num::ToPrimitive;
 
 use crate::{
     error::ParseError as PdfParseError,
     rgb::Rgb,
     utils::{_name, _real, int1, take_until_unmatched, ws},
-    ParseResult,
+    NomResult, NomError,
 };
 
 use super::{StreamObject, TextContent};
 
-fn rg(input: &[u8]) -> ParseResult<Rgb> {
+#[inline]
+fn convert_result<O, E>(result: Result<O, E>, input: &[u8], error_kind: ErrorKind) -> NomResult<O> {
+    result
+        .map(|o| (input, o))
+        .map_err(|_| nom::Err::Error(NomError::from_error_kind(input, error_kind)))
+}
+
+fn rg(input: &[u8]) -> NomResult<Rgb> {
     map(
         terminated(
             tuple((ws(int1::<u8>), ws(int1::<u8>), ws(int1::<u8>))),
@@ -32,15 +42,15 @@ fn rg(input: &[u8]) -> ParseResult<Rgb> {
     )(input)
 }
 
-fn font_family_and_size(input: &[u8]) -> ParseResult<(Vec<u8>, u32)> {
+fn font_family_and_size(input: &[u8]) -> NomResult<(Vec<u8>, u32)> {
     terminated(tuple((ws(_name), ws(int1::<u32>))), tag("Tf"))(input)
 }
 
-fn location(input: &[u8]) -> ParseResult<(f32, f32)> {
+fn location(input: &[u8]) -> NomResult<(f32, f32)> {
     terminated(tuple((ws(_real::<f32>), ws(_real::<f32>))), tag("Td"))(input)
 }
 
-fn text_content(input: &[u8]) -> ParseResult<&[u8]> {
+fn text_content(input: &[u8]) -> NomResult<&[u8]> {
     terminated(
         delimited(
             tuple((multispace0, char('('))),
@@ -51,7 +61,7 @@ fn text_content(input: &[u8]) -> ParseResult<&[u8]> {
     )(input)
 }
 
-fn text(input: &[u8]) -> ParseResult<TextContent<'_>> {
+fn text(input: &[u8]) -> NomResult<TextContent<'_>> {
     map(
         delimited(
             ws(tag("BT")),
@@ -68,20 +78,20 @@ fn text(input: &[u8]) -> ParseResult<TextContent<'_>> {
     )(input)
 }
 
-fn cap_style(input: &[u8]) -> ParseResult<LineCap> {
-    map_res(terminated(ws(int1::<u8>), ws(char('J'))), |e| match e {
+fn cap_style(input: &[u8]) -> NomResult<LineCap> {
+    map_res(terminated(ws(int1::<u8>), ws(char('J'))), |cap| match cap {
         0 => Ok(LineCap::Butt),
         1 => Ok(LineCap::Round),
         2 => Ok(LineCap::Square),
         // TODO: Shouldn't need e.into()...
         _ => {
-            let e: PdfParseError = PdfParseError::InvalidCapStyle(e.into()).into();
+            let e: PdfParseError = PdfParseError::InvalidCapStyle(cap.into()).into();
             Err(e)
         }
     })(input)
 }
 
-fn move_to(input: &[u8]) -> ParseResult<Vector<f32>> {
+fn move_to(input: &[u8]) -> NomResult<Vector<f32>> {
     map(
         terminated(tuple((ws(int1::<u32>), ws(int1::<u32>))), ws(char('m'))),
         // TODO: any issue with number overflow?
@@ -89,23 +99,60 @@ fn move_to(input: &[u8]) -> ParseResult<Vector<f32>> {
     )(input)
 }
 
-fn line_to(input: &[u8]) -> ParseResult<Vector<f32>> {
+fn number_forced_to_f32(input: &[u8]) -> NomResult<f32> {
+    alt((
+        real,
+        map_res::<_, _, _, _, Error, _, _>(integer, |num| {
+            num.to_f32().ok_or::<Error>(NumberError::InvalidNumberConversion.into())
+        })
+    ))(input)
+}
+
+fn integer(input: &[u8]) -> NomResult<i64> {
+    let (i, _) = pair(opt(one_of("+-")), digit1)(input)?;
+
+    let int_input = &input[..input.len() - i.len()];
+    convert_result(i64::from_str(std::str::from_utf8(int_input).unwrap()), i, ErrorKind::Digit)
+}
+
+fn real(input: &[u8]) -> NomResult<f32> {
+    let (i, _) = pair(
+        opt(one_of("+-")),
+        alt((
+            map(tuple((digit1, tag(b"."), digit0)), |_| ()),
+            map(pair(tag(b"."), digit1), |_| ()),
+        )),
+    )(input)?;
+
+    let float_input = &input[..input.len() - i.len()];
+    convert_result(f32::from_str(std::str::from_utf8(float_input).unwrap()), i, ErrorKind::Digit)
+}
+
+fn line_to(input: &[u8]) -> NomResult<Vector<f32>> {
     map(
-        terminated(tuple((ws(int1::<u32>), ws(int1::<u32>))), ws(char('l'))),
-        // TODO: any issue with number overflow?
-        |(x, y)| vector(x as f32, y as f32),
+        terminated(tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))), ws(char('l'))),
+        |(x, y)| vector(x, y),
     )(input)
 }
 
-fn stroke(input: &[u8]) -> ParseResult<()> {
+#[test]
+fn test_line() {
+    assert_eq!(vector(1.23, 1.23), line_to(&"1.23 1.23 l".as_bytes()).unwrap().1);
+    assert_eq!(vector(1.00, 1.23), line_to(&"1 +1.23 l".as_bytes()).unwrap().1);
+    assert_eq!(vector(1.00, -1.23), line_to(&"1 -1.23 l".as_bytes()).unwrap().1);
+    // FIXME: Handle this case which should be valid:
+    // assert_eq!(vector(1.00, -1.23), line_to(&"1 --1.23 l".as_bytes()).unwrap().1);
+}
+
+fn stroke(input: &[u8]) -> NomResult<()> {
     map(ws(char('S')), |_| ())(input)
 }
 
-fn fill(input: &[u8]) -> ParseResult<()> {
+fn fill(input: &[u8]) -> NomResult<()> {
     map(ws(char('f')), |_| ())(input)
 }
 
-pub fn stream_objects(input: &[u8]) -> ParseResult<Vec<StreamObject<'_>>> {
+pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
     many0(alt((
         map(text, StreamObject::Text),
         map(cap_style, StreamObject::CapStyle),

@@ -25,7 +25,8 @@ extern crate maplit;
 pub use crate::pdf::Pdf;
 pub use crate::stream::StreamObject;
 
-type ParseResult<'a, U> = IResult<&'a [u8], U, VerboseError<&'a [u8]>>;
+type NomError = ();
+type NomResult<'a, O, E = NomError> = IResult<&'a [u8], O, E>;
 
 type ObjectNumber = u32;
 

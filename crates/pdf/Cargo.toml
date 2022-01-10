@@ -14,8 +14,10 @@ maplit = "1.0.2"
 font-kit = "0.10.0"
 lyon_geom = { path = "../geom" }
 lyon_path = { path = "../path" }
+shared = { path = "../shared" }
 anyhow = "1.0.52"
 encoding = "^0.2"
 thiserror = "1.0.30"
 strum = "0.23.0"
 strum_macros = "0.23"
+num = "0.4.0"

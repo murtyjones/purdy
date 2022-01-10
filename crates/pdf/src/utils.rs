@@ -2,7 +2,7 @@ use std::str::from_utf8;
 use std::{fs::File, path::PathBuf};
 use std::{io::Read, str::FromStr};
 
-use crate::{object::Name, ObjectId, ParseResult};
+use crate::{object::Name, ObjectId, NomResult};
 use anyhow::Result;
 use nom::bitvec::view::AsBits;
 use nom::bytes::complete::take_while1;
@@ -59,7 +59,7 @@ pub fn object_id_to_filename(page_id: ObjectId) -> String {
 }
 
 #[inline]
-pub fn strip_nom<T>(result: ParseResult<'static, T>) -> Result<T> {
+pub fn strip_nom<T>(result: NomResult<'static, T>) -> Result<T> {
     Ok(result?.1)
 }
 
@@ -88,7 +88,7 @@ fn minus(input: u8) -> bool {
     b"-".contains(&input)
 }
 
-fn eol(input: &[u8]) -> ParseResult<&[u8]> {
+fn eol(input: &[u8]) -> NomResult<&[u8]> {
     alt((tag(b"\r\n"), tag(b"\n"), tag("\r")))(input)
 }
 
@@ -97,20 +97,20 @@ fn to_nom<O, E>(
     result: std::result::Result<O, E>,
     input: &[u8],
     error_kind: ErrorKind,
-) -> ParseResult<O> {
+) -> NomResult<O> {
     result
         .map(|o| (input, o))
         .map_err(|_| nom::Err::Error(nom::error::ParseError::from_error_kind(input, error_kind)))
 }
 
-pub fn hex_char2(input: &[u8]) -> ParseResult<u8> {
+pub fn hex_char2(input: &[u8]) -> NomResult<u8> {
     map_res(
         verify(take(2usize), |h: &[u8]| h.iter().cloned().all(is_hex_digit)),
         |x| u8::from_str_radix(from_utf8(x).unwrap(), 16),
     )(input)
 }
 
-fn comment(input: &[u8]) -> ParseResult<()> {
+fn comment(input: &[u8]) -> NomResult<()> {
     map(
         tuple((tag(b"%"), take_while(|c: u8| !b"\r\n".contains(&c)), eol)),
         |_| (),
@@ -145,7 +145,7 @@ where
 }
 
 #[inline]
-pub fn int1<I: FromStr>(input: &[u8]) -> ParseResult<I> {
+pub fn int1<I: FromStr>(input: &[u8]) -> NomResult<I> {
     map_res(tuple((opt(char('-')), digit1)), |(minus, digits)| {
         let digit_str = from_utf8(digits).unwrap();
         if minus.is_none() {
@@ -156,7 +156,7 @@ pub fn int1<I: FromStr>(input: &[u8]) -> ParseResult<I> {
     })(input)
 }
 
-pub fn _name(input: &[u8]) -> ParseResult<Name> {
+pub fn _name(input: &[u8]) -> NomResult<Name> {
     delimited(
         tuple((space_or_comment, tag(b"/"))),
         many0(alt((
@@ -204,7 +204,7 @@ fn find_subsequence(haystack: &[u8], needles: Vec<&[u8]>) -> Option<usize> {
 pub fn take_until_unmatched<'a>(
     opening: &'a [u8],
     closing: &'a [u8],
-) -> impl Fn(&'a [u8]) -> ParseResult<&[u8]> {
+) -> impl Fn(&'a [u8]) -> NomResult<&[u8]> {
     move |i: &[u8]| {
         // the index to cut the beginning of the string
         let mut index = 0;
@@ -245,7 +245,7 @@ pub fn take_until_unmatched<'a>(
     }
 }
 
-pub fn _real<I: FromStr>(input: &[u8]) -> ParseResult<I> {
+pub fn _real<I: FromStr>(input: &[u8]) -> NomResult<I> {
     let (i, _) = pair(
         opt(one_of("+-")),
         alt((
