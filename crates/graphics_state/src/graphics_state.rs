@@ -31,6 +31,7 @@ impl Default for State {
 #[derive(Debug)]
 pub struct GraphicsState {
     pub finished_fill_paths: Vec<lyon_path::Path>,
+    pub finished_stroke_paths: Vec<lyon_path::Path>,
     page_width: Width,
     page_height: Height,
     // ... Shared Values
@@ -142,6 +143,7 @@ impl GraphicsState {
         // ...
         GraphicsState {
             finished_fill_paths: vec![],
+            finished_stroke_paths: vec![],
             page_width,
             page_height,
             // ...
@@ -176,6 +178,18 @@ impl GraphicsState {
         p.make_fillable_if_needed();
         let path = p.build();
         self.finished_fill_paths.push(path);
+        self.to_page_description()?;
+        Ok(())
+    }
+
+    pub fn stroke(&mut self) -> Result<()> {
+        self.to_path()?;
+        let w = self.page_width;
+        let h = self.page_height;
+        let mut p = std::mem::replace(self.as_path()?, Path::new(w, h));
+        p.close();
+        let path = p.build();
+        self.finished_stroke_paths.push(path);
         self.to_page_description()?;
         Ok(())
     }

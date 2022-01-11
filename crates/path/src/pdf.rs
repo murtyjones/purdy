@@ -13,36 +13,26 @@ use std::convert::TryInto;
 pub struct Pdf {
     pub(crate) points: Vec<Point>,
     pub(crate) verbs: Vec<Verb>,
-    first_position: Point,
     current_position: Point,
+    bottom_left_corner: Point,
+    need_moveto: bool,
+    is_empty: bool,
     page_width: Width,
     page_height: Height,
 }
 
 impl Pdf {
     pub fn new(page_width: Width, page_height: Height) -> Self {
-        let mut p = Pdf {
+        Pdf {
             points: vec![],
             verbs: vec![],
-            first_position: point(-page_width / 2.0, page_height / 2.0),
-            current_position: point(-page_width / 2.0, page_height / 2.0),
+            current_position: point(0.0, 0.0),
+            bottom_left_corner: point(-page_width / 2.0, page_height / 2.0),
+            need_moveto: true,
+            is_empty: true,
             page_width,
             page_height,
-        };
-        p.move_to_abs(p.first_position);
-        p
-    }
-
-    pub fn move_to(&mut self, to: Vector) -> EndpointId {
-        self.end_if_needed();
-
-        let to = vector(to.x, -to.y);
-        let to = self.first_position + to;
-        let id = self.begin(to, None);
-
-        self.current_position = to;
-
-        id
+        }
     }
 
     fn move_to_abs(&mut self, to: Point) -> EndpointId {
@@ -51,6 +41,21 @@ impl Pdf {
         let id = self.begin(to, None);
 
         self.current_position = to;
+        self.is_empty = false;
+        self.need_moveto = false;
+        id
+    }
+
+    pub fn move_to(&mut self, to: Vector) -> EndpointId {
+        self.end_if_needed();
+
+        let to = vector(to.x, -to.y);
+        let to = self.bottom_left_corner + to;
+        let id = self.begin(to, None);
+
+        self.current_position = to;
+        self.is_empty = false;
+        self.need_moveto = false;
 
         id
     }
@@ -65,6 +70,35 @@ impl Pdf {
         self.verbs.push(Verb::Begin);
 
         id
+    }
+
+    /// Ensures the current sub-path has a moveto command.
+    ///
+    /// Returns an ID if the command should be skipped and the ID returned instead.
+    #[inline(always)]
+    fn begin_if_needed(&mut self, default: &Vector) -> Option<EndpointId> {
+        if self.need_moveto {
+            return self.insert_move_to(default);
+        }
+
+        None
+    }
+
+    #[inline(never)]
+    fn insert_move_to(&mut self, _default: &Vector) -> Option<EndpointId> {
+        // if nothing in path, go to bottom corner of page
+        if self.is_empty {
+            return Some(self.move_to_abs(point(-self.page_width / 2.0, self.page_height / 2.0)));
+        }
+        // TODO: Not sure about this. Test a scenario that would trip it up. E.g.
+        // a LineTo without a MoveTo in front of it, but with is_empty == false.
+        // E.g.
+        // 10 10 m
+        // 10 10 l
+        // 20 20 l
+        self.move_to_abs(self.current_position);
+
+        None
     }
 
     fn end_if_needed(&mut self) {
@@ -82,11 +116,13 @@ impl Pdf {
     }
 
     pub fn line_to(&mut self, to: Vector) -> EndpointId {
+        self.begin_if_needed(&to);
+
         // TODO: assert that there is a moveto command in the subpath? Not
         // sure this is needed for PDFs but it's in the WithSVG impl
 
         let to = vector(to.x, -to.y);
-        let to = self.first_position + to;
+        let to = self.bottom_left_corner + to;
 
         // Ensure that the line will be visible even if it's only a dot:
         let absolute_change = (self.current_position - to).abs();
@@ -260,15 +296,12 @@ mod test {
     fn test_empty_path() {
         let w = Width::new(800.0);
         let h = Height::new(800.0);
-        let mut pdf = Pdf::new(w, h);
+        let pdf = Pdf::new(w, h);
         let path = pdf.build();
 
-        let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([
-            // MoveTo:
-            point(-400.0, 400.0),
-        ]);
+        let expected_points: Box<[Point2D<f32, UnknownUnit>]> = Box::new([]);
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
-        let expected_verbs: Box<[Verb]> = Box::new([Begin, End]);
+        let expected_verbs: Box<[Verb]> = Box::new([]);
         assert_eq!(path.verbs, expected_verbs);
     }
 
