@@ -190,11 +190,6 @@ f
 % Zero-width rect
 30 10 0 10 re
 f
-% Zero-area circle
-10 w 1 J
-45 15 m
-45 15 l
-S
 endstream
 endobj
 

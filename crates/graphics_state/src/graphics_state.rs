@@ -178,6 +178,7 @@ impl GraphicsState {
         self.to_page_description()?;
         let p = self.as_page_description()?;
         p.set_line_width(w);
+        Ok(())
     }
 
     fn as_path(&mut self) -> Result<&mut Path> {
