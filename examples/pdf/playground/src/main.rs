@@ -1,18 +1,12 @@
-use lyon::geom::Box2D;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
-use lyon::path::LineCap;
-use lyon::path::pdf::Pdf;
-use pdf::utils::read_file_bytes;
-use pdf::{Pdf as PdfDocument, StreamObject};
+use lyon::tessellation::LineCap;
+use lyon::path::{Path};
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
-use lyon::tessellation::{FillOptions, FillTessellator};
-use graphics_state::{GraphicsState, Width, Height};
 use std::io::Write;
 
-// For create_buffer_init()
 use wgpu::util::DeviceExt;
 
 use futures::executor::block_on;
@@ -74,58 +68,10 @@ impl Primitive {
 unsafe impl bytemuck::Pod for Primitive {}
 unsafe impl bytemuck::Zeroable for Primitive {}
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-struct BgPoint {
-    point: [f32; 2],
-}
-unsafe impl bytemuck::Pod for BgPoint {}
-unsafe impl bytemuck::Zeroable for BgPoint {}
-
 const DEFAULT_WINDOW_WIDTH: f32 = 612.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
 fn main() {
-    // Number of samples for anti-aliasing
-    let mut pdf = {
-        let bytes = read_file_bytes(concat!(
-            env!("CARGO_WORKSPACE_DIR"),
-            "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
-        ));
-        PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
-    };
-    let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
-    let draw_instructions = drawing.as_stream().unwrap().get_content().unwrap();
-    let width = Width::new(DEFAULT_WINDOW_WIDTH);
-    let height = Height::new(DEFAULT_WINDOW_HEIGHT);
-    let mut graphics_state = GraphicsState::new(width, height);
-    for inst in draw_instructions {
-        match inst {
-            StreamObject::Text(_) => unimplemented!(),
-            StreamObject::CapStyle(c) => {
-                graphics_state.set_cap_style(c).unwrap();
-            },
-            StreamObject::MoveTo(p) => {
-                graphics_state.move_to(p).unwrap();
-            }
-            StreamObject::LineTo(p) => {
-                graphics_state.line_to(p).unwrap();
-            }
-            StreamObject::Rect(low_left, width, height) => {
-                graphics_state.rect(low_left, width, height).unwrap();
-            }
-            StreamObject::Fill => {
-                graphics_state.fill().unwrap();
-            }
-            StreamObject::Stroke => {
-                graphics_state.stroke().unwrap();
-            }
-            StreamObject::LineWidth(w) => {
-                graphics_state.set_line_width(w).unwrap();
-            }
-        }
-    }
-
     // Set to 1 to disable
     let sample_count = 1;
 
@@ -133,51 +79,31 @@ fn main() {
     let tolerance = 0.02;
 
     let stroke_prim_id = 0;
-    let fill_prim_id = 1;
 
     let mut geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
 
-    let mut fill_tess = FillTessellator::new();
+    // Build a Path for the arrow.
+    let mut builder = Path::builder().with_svg();
+    builder.move_to(point(0.0, 0.0));
+    builder.move_to(point(0.0, 20.0));
+    builder.line_to(point(0.0, 21.0));
+    builder.close();
+    let path = builder.build();
+
     let mut stroke_tess = StrokeTessellator::new();
-
-    graphics_state.finished_fill_paths.iter().for_each(|path| {
-        fill_tess
-            .tessellate_path(
-                path,
-                &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
-            )
-            .unwrap();
-    });
-
-
-    let fill_range = 0..(geometry.indices.len() as u32);
-
     let options = StrokeOptions::tolerance(tolerance)
         .with_line_cap(LineCap::Round)
         .with_line_width(10.0);
 
-    graphics_state.finished_stroke_paths.iter().for_each(|path| {
-        stroke_tess
-            .tessellate_path(
-                path,
-                &options,
-                &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
-            )
-            .unwrap();
-    });
-
-    let stroke_range = fill_range.end..(geometry.indices.len() as u32);
-
-    let mut bg_geometry: VertexBuffers<BgPoint, u16> = VertexBuffers::new();
-
-    fill_tess
-        .tessellate_rectangle(
-            &Box2D::default(),
-            &FillOptions::DEFAULT,
-            &mut BuffersBuilder::new(&mut bg_geometry, Custom),
+    stroke_tess
+        .tessellate(
+            &path,
+            &options,
+            &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
         )
         .unwrap();
+
+    let stroke_range = 0..(geometry.indices.len() as u32);
 
     let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
     for _ in 0..PRIM_BUFFER_LEN {
@@ -195,14 +121,7 @@ fn main() {
     cpu_primitives[stroke_prim_id] = Primitive {
         color: [0.0, 0.0, 0.0, 1.0],
         z_index: num_instances as i32 + 2,
-        // TODO: Why 5.0? Stroke width / 2?
         width: 5.0,
-        ..Primitive::DEFAULT
-    };
-    // Main fill primitive
-    cpu_primitives[fill_prim_id] = Primitive {
-        color: [1.0, 1.0, 1.0, 1.0],
-        z_index: num_instances as i32 + 1,
         ..Primitive::DEFAULT
     };
 
@@ -239,18 +158,6 @@ fn main() {
         usage: wgpu::BufferUsages::INDEX,
     });
 
-    let bg_vbo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: None,
-        contents: bytemuck::cast_slice(&bg_geometry.vertices),
-        usage: wgpu::BufferUsages::VERTEX,
-    });
-
-    let bg_ibo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: None,
-        contents: bytemuck::cast_slice(&bg_geometry.indices),
-        usage: wgpu::BufferUsages::INDEX,
-    });
-
     let prim_buffer_byte_size = (PRIM_BUFFER_LEN * std::mem::size_of::<Primitive>()) as u64;
     let globals_buffer_byte_size = std::mem::size_of::<Globals>() as u64;
 
@@ -275,14 +182,6 @@ fn main() {
     let fs_module = &device.create_shader_module(&wgpu::ShaderModuleDescriptor {
         label: Some("Geometry fs"),
         source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/geometry.fs.wgsl").into()),
-    });
-    let bg_vs_module = &device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-        label: Some("Background vs"),
-        source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/background.vs.wgsl").into()),
-    });
-    let bg_fs_module = &device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-        label: Some("Background fs"),
-        source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/background.fs.wgsl").into()),
     });
 
     let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -387,48 +286,6 @@ fn main() {
 
     let render_pipeline = device.create_render_pipeline(&render_pipeline_descriptor);
 
-    let bg_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: None,
-        layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
-            module: &bg_vs_module,
-            entry_point: "main",
-            buffers: &[wgpu::VertexBufferLayout {
-                array_stride: std::mem::size_of::<Point>() as u64,
-                step_mode: wgpu::VertexStepMode::Vertex,
-                attributes: &[wgpu::VertexAttribute {
-                    offset: 0,
-                    format: wgpu::VertexFormat::Float32x2,
-                    shader_location: 0,
-                }],
-            }],
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: &bg_fs_module,
-            entry_point: "main",
-            targets: &[wgpu::ColorTargetState {
-                format: wgpu::TextureFormat::Bgra8Unorm,
-                blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
-            }],
-        }),
-        primitive: wgpu::PrimitiveState {
-            topology: wgpu::PrimitiveTopology::TriangleList,
-            polygon_mode: wgpu::PolygonMode::Fill,
-            front_face: wgpu::FrontFace::Ccw,
-            strip_index_format: None,
-            cull_mode: None,
-            clamp_depth: false,
-            conservative: false,
-        },
-        depth_stencil: None,
-        multisample: wgpu::MultisampleState {
-            count: sample_count,
-            mask: !0,
-            alpha_to_coverage_enabled: false,
-        },
-    });
-
     let mut surface_desc = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
         format: wgpu::TextureFormat::Bgra8Unorm,
@@ -493,15 +350,7 @@ fn main() {
         pass.set_index_buffer(ibo.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo.slice(..));
 
-        pass.draw_indexed(fill_range.clone(), 0, 0..(num_instances as u32));
         pass.draw_indexed(stroke_range.clone(), 0, 0..1);
-
-        // Draw background
-        pass.set_pipeline(&bg_pipeline);
-        pass.set_bind_group(0, &bind_group, &[]);
-        pass.set_index_buffer(bg_ibo.slice(..), wgpu::IndexFormat::Uint16);
-        pass.set_vertex_buffer(0, bg_vbo.slice(..));
-        pass.draw_indexed(0..6, 0, 0..1);
     }
 
     // It is a WebGPU requirement that ImageCopyBuffer.layout.bytes_per_row %
@@ -571,16 +420,6 @@ impl StrokeVertexConstructor<GpuVertex> for WithId {
             position: vertex.position_on_path().to_array(),
             normal: vertex.normal().to_array(),
             prim_id: self.0,
-        }
-    }
-}
-
-pub struct Custom;
-
-impl FillVertexConstructor<BgPoint> for Custom {
-    fn new_vertex(&mut self, vertex: tessellation::FillVertex) -> BgPoint {
-        BgPoint {
-            point: vertex.position().to_array(),
         }
     }
 }
