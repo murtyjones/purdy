@@ -178,7 +178,7 @@ fn rect(input: &[u8]) -> NomResult<(Vector<f32>, Width, Height)> {
 
 #[test]
 fn test_rect() {
-    assert_eq!((vector(100.0, 101.0), 102.0, 0.0), rect(&"100 101 102 0 re".as_bytes()).unwrap().1);
+    assert_eq!((vector(100.0, 101.0), Width::new(102.0), Height::new(0.0)), rect(&"100 101 102 0 re".as_bytes()).unwrap().1);
 }
 
 fn stroke(input: &[u8]) -> NomResult<()> {
