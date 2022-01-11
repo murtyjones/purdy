@@ -1,13 +1,11 @@
+use anyhow::Error;
 use lyon_geom::{vector, Vector};
 use lyon_path::LineCap;
-use shared::{NumberError, Height, Width, LineWidth};
-use anyhow::Error;
-use std::str::FromStr;
 use nom::{
     branch::alt,
     bytes::complete::tag,
     bytes::complete::take_until,
-    character::complete::{char, one_of, digit0, digit1},
+    character::complete::{char, digit0, digit1, one_of},
     character::streaming::multispace0,
     combinator::{map, map_opt, map_res, opt},
     error::{ErrorKind, ParseError},
@@ -15,12 +13,14 @@ use nom::{
     sequence::{delimited, pair, terminated, tuple},
 };
 use num::ToPrimitive;
+use shared::{Height, LineWidth, NumberError, Width};
+use std::str::FromStr;
 
 use crate::{
     error::ParseError as PdfParseError,
     rgb::Rgb,
     utils::{_name, _real, int1, take_until_unmatched, ws},
-    NomResult, NomError,
+    NomError, NomResult,
 };
 
 use super::{StreamObject, TextContent};
@@ -93,27 +93,49 @@ fn cap_style(input: &[u8]) -> NomResult<LineCap> {
 
 fn move_to(input: &[u8]) -> NomResult<Vector<f32>> {
     map(
-        terminated(tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))), ws(char('m'))),
+        terminated(
+            tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))),
+            ws(char('m')),
+        ),
         |(x, y)| vector(x, y),
     )(input)
 }
 
 #[test]
 fn test_move_to() {
-    assert_eq!(vector(1.23, 1.23), move_to(&"1.23 1.23 m".as_bytes()).unwrap().1);
-    assert_eq!(vector(1.00, 1.23), move_to(&"1 +1.23 m".as_bytes()).unwrap().1);
-    assert_eq!(vector(1.00, -1.23), move_to(&"1 -1.23 m".as_bytes()).unwrap().1);
-    assert_eq!(vector(-1.23, -1.24), move_to(&"+-+1.23 --1.24 m".as_bytes()).unwrap().1);
-    assert_eq!(vector(-10.0, 1.24), move_to(&"+-+10 ++1.24 m".as_bytes()).unwrap().1);
-    assert_eq!(vector(-10.0, -1.0), move_to(&"-----10 +-+1 m".as_bytes()).unwrap().1);
+    assert_eq!(
+        vector(1.23, 1.23),
+        move_to(&"1.23 1.23 m".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(1.00, 1.23),
+        move_to(&"1 +1.23 m".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(1.00, -1.23),
+        move_to(&"1 -1.23 m".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-1.23, -1.24),
+        move_to(&"+-+1.23 --1.24 m".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-10.0, 1.24),
+        move_to(&"+-+10 ++1.24 m".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-10.0, -1.0),
+        move_to(&"-----10 +-+1 m".as_bytes()).unwrap().1
+    );
 }
 
 fn number_forced_to_f32(input: &[u8]) -> NomResult<f32> {
     alt((
         real,
         map_res::<_, _, _, _, Error, _, _>(integer, |num| {
-            num.to_f32().ok_or::<Error>(NumberError::InvalidNumberConversion.into())
-        })
+            num.to_f32()
+                .ok_or::<Error>(NumberError::InvalidNumberConversion.into())
+        }),
     ))(input)
 }
 
@@ -125,7 +147,11 @@ fn integer(input: &[u8]) -> NomResult<i64> {
     let unsigned_int = &input[number_of_pluses_minuses..input.len() - rest.len()];
     let plus_minus = &[(if contains_minus { b'-' } else { b'+' })];
     let final_number: Vec<u8> = [plus_minus, unsigned_int].concat();
-    convert_result(i64::from_str(std::str::from_utf8(&final_number).unwrap()), rest, ErrorKind::Digit)
+    convert_result(
+        i64::from_str(std::str::from_utf8(&final_number).unwrap()),
+        rest,
+        ErrorKind::Digit,
+    )
 }
 
 fn real(input: &[u8]) -> NomResult<f32> {
@@ -138,47 +164,76 @@ fn real(input: &[u8]) -> NomResult<f32> {
     )(input)?;
     let number_of_pluses_minuses = pluses_minuses.as_ref().unwrap_or(&vec![]).len();
     let contains_minus = pluses_minuses.as_ref().unwrap_or(&vec![]).contains(&'-');
-    
+
     let unsigned_float = &input[number_of_pluses_minuses..input.len() - rest.len()];
     let plus_minus = &[(if contains_minus { b'-' } else { b'+' })];
     let final_number: Vec<u8> = [plus_minus, unsigned_float].concat();
-    convert_result(f32::from_str(std::str::from_utf8(&final_number).unwrap()), rest, ErrorKind::Digit)
+    convert_result(
+        f32::from_str(std::str::from_utf8(&final_number).unwrap()),
+        rest,
+        ErrorKind::Digit,
+    )
 }
 
 fn line_to(input: &[u8]) -> NomResult<Vector<f32>> {
     map(
-        terminated(tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))), ws(char('l'))),
+        terminated(
+            tuple((ws(number_forced_to_f32), ws(number_forced_to_f32))),
+            ws(char('l')),
+        ),
         |(x, y)| vector(x, y),
     )(input)
 }
 
 #[test]
 fn test_line_to() {
-    assert_eq!(vector(1.23, 1.23), line_to(&"1.23 1.23 l".as_bytes()).unwrap().1);
-    assert_eq!(vector(1.00, 1.23), line_to(&"1 +1.23 l".as_bytes()).unwrap().1);
-    assert_eq!(vector(1.00, -1.23), line_to(&"1 -1.23 l".as_bytes()).unwrap().1);
-    assert_eq!(vector(-1.23, -1.24), line_to(&"+-+1.23 --1.24 l".as_bytes()).unwrap().1);
-    assert_eq!(vector(-10.0, 1.24), line_to(&"+-+10 ++1.24 l".as_bytes()).unwrap().1);
-    assert_eq!(vector(-10.0, -1.0), line_to(&"-----10 +-+1 l".as_bytes()).unwrap().1);
+    assert_eq!(
+        vector(1.23, 1.23),
+        line_to(&"1.23 1.23 l".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(1.00, 1.23),
+        line_to(&"1 +1.23 l".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(1.00, -1.23),
+        line_to(&"1 -1.23 l".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-1.23, -1.24),
+        line_to(&"+-+1.23 --1.24 l".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-10.0, 1.24),
+        line_to(&"+-+10 ++1.24 l".as_bytes()).unwrap().1
+    );
+    assert_eq!(
+        vector(-10.0, -1.0),
+        line_to(&"-----10 +-+1 l".as_bytes()).unwrap().1
+    );
 }
 
 fn rect(input: &[u8]) -> NomResult<(Vector<f32>, Width, Height)> {
     map(
-        terminated(tuple((
-            ws(number_forced_to_f32), 
-            ws(number_forced_to_f32),
-            ws(number_forced_to_f32), 
-            ws(number_forced_to_f32)
-        )), ws(tag("re"))),
-        |(x, y, w, h)| {
-            (vector(x, y), Width::new(w), Height::new(h))
-        },
+        terminated(
+            tuple((
+                ws(number_forced_to_f32),
+                ws(number_forced_to_f32),
+                ws(number_forced_to_f32),
+                ws(number_forced_to_f32),
+            )),
+            ws(tag("re")),
+        ),
+        |(x, y, w, h)| (vector(x, y), Width::new(w), Height::new(h)),
     )(input)
 }
 
 #[test]
 fn test_rect() {
-    assert_eq!((vector(100.0, 101.0), Width::new(102.0), Height::new(0.0)), rect(&"100 101 102 0 re".as_bytes()).unwrap().1);
+    assert_eq!(
+        (vector(100.0, 101.0), Width::new(102.0), Height::new(0.0)),
+        rect(&"100 101 102 0 re".as_bytes()).unwrap().1
+    );
 }
 
 fn stroke(input: &[u8]) -> NomResult<()> {
@@ -190,12 +245,9 @@ fn fill(input: &[u8]) -> NomResult<()> {
 }
 
 fn line_width(input: &[u8]) -> NomResult<LineWidth> {
-    map(terminated(
-        ws(number_forced_to_f32),
-        ws(char('w'))
-    ),
-    |w| LineWidth::new(w)
-)(input)
+    map(terminated(ws(number_forced_to_f32), ws(char('w'))), |w| {
+        LineWidth::new(w)
+    })(input)
 }
 
 pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
@@ -204,7 +256,9 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(cap_style, StreamObject::CapStyle),
         map(move_to, StreamObject::MoveTo),
         map(line_to, StreamObject::LineTo),
-        map(rect, |(low_left, width, height)| StreamObject::Rect(low_left, width, height)),
+        map(rect, |(low_left, width, height)| {
+            StreamObject::Rect(low_left, width, height)
+        }),
         map(stroke, |_| StreamObject::Stroke),
         map(fill, |_| StreamObject::Fill),
         map(line_width, StreamObject::LineWidth),
