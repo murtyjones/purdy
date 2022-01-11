@@ -80,7 +80,7 @@ impl Path {
         self.builder.line_to(to);
     }
     
-    fn rect(&mut self, low_left: Vector, width: f32, height: f32) {
+    fn rect(&mut self, low_left: Vector, width: Width, height: Height) {
         self.builder.rect(low_left, width, height);
     }
     

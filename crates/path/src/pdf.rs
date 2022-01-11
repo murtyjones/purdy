@@ -109,9 +109,9 @@ impl Pdf {
         id
     }
 
-    pub fn rect(&mut self, low_left: Vector, width: f32, height: f32) {
-        let width = f32::max(width, 1.0);
-        let height = f32::max(height, 1.0);
+    pub fn rect(&mut self, low_left: Vector, width: Width, height: Height) {
+        let width = f32::max(*width, 1.0);
+        let height = f32::max(*height, 1.0);
         self.move_to(low_left);
         let to = vector(low_left.x + width, low_left.y);
         self.line_to(to);
