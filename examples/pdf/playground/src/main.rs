@@ -1,5 +1,7 @@
 use lyon::geom::Box2D;
+use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
+use lyon::path::LineCap;
 use lyon::path::pdf::Pdf;
 use pdf::utils::read_file_bytes;
 use pdf::{Pdf as PdfDocument, StreamObject};
@@ -116,7 +118,7 @@ fn main() {
                 graphics_state.fill().unwrap();
             }
             StreamObject::Stroke => {
-                unimplemented!();
+                graphics_state.stroke().unwrap();
             }
             StreamObject::LineWidth(w) => {
                 graphics_state.set_line_width(w).unwrap();
@@ -151,13 +153,19 @@ fn main() {
 
     let fill_range = 0..(geometry.indices.len() as u32);
 
-    // stroke_tess
-    //     .tessellate_path(
-    //         path,
-    //         &StrokeOptions::tolerance(tolerance),
-    //         &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
-    //     )
-    //     .unwrap();
+    let options = StrokeOptions::tolerance(tolerance)
+        .with_line_cap(LineCap::Round)
+        .with_line_width(10.0);
+
+    graphics_state.finished_stroke_paths[0..].iter().for_each(|path| {
+        stroke_tess
+            .tessellate_path(
+                path,
+                &options,
+                &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
+            )
+            .unwrap();
+    });
 
     let stroke_range = fill_range.end..(geometry.indices.len() as u32);
 
@@ -187,7 +195,8 @@ fn main() {
     cpu_primitives[stroke_prim_id] = Primitive {
         color: [0.0, 0.0, 0.0, 1.0],
         z_index: num_instances as i32 + 2,
-        width: 1.0,
+        // TODO: Why 5.0? Stroke width / 2?
+        width: 5.0,
         ..Primitive::DEFAULT
     };
     // Main fill primitive
