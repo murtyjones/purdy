@@ -87,7 +87,7 @@ const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
 fn main() {
     // Number of samples for anti-aliasing
-    let mut pdf = {
+    let pdf = {
         let bytes = read_file_bytes(concat!(
             env!("CARGO_WORKSPACE_DIR"),
             "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
