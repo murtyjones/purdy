@@ -179,17 +179,6 @@ endobj
 11 0 obj
 << /Length 19 >>
 stream
-% Zero-length, zero-area line
-10 10 m
-10 10 l
-f
-% Zero-area line
-20 10 m
-20 20 l
-f
-% Zero-width rect
-30 10 0 10 re
-f
 % Zero-area circle
 10 w 1 J
 45 15 m

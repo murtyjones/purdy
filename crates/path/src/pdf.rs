@@ -24,8 +24,8 @@ impl Pdf {
         let mut p = Pdf {
             points: vec![],
             verbs: vec![],
-            first_position: point(-page_width / 2.0, page_height / 2.0),
-            current_position: point(-page_width / 2.0, page_height / 2.0),
+            first_position: point(0.0, 0.0),
+            current_position: point(0.0, 0.0),
             page_width,
             page_height,
         };
@@ -240,7 +240,9 @@ impl Build for Pdf {
         self.end_if_needed();
         // TODO: Implement validator
         // self.validator.build();
-
+        // self.verbs.remove(0);
+        // self.verbs.remove(0);
+        // self.points.remove(0);
         Path {
             points: self.points.into_boxed_slice(),
             verbs: self.verbs.into_boxed_slice(),
