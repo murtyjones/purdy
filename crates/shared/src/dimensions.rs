@@ -1,6 +1,6 @@
 use std::ops::{Deref, Sub, Div, Neg};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Width(f32);
 
 impl Width {
@@ -52,7 +52,7 @@ impl Neg for Width {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Height(f32);
 
 impl Height {

@@ -133,7 +133,7 @@ impl GraphicsState {
         Ok(())
     }
 
-    pub fn rect(&mut self, low_left: Vector, width: f32, height: f32) -> Result<()> {
+    pub fn rect(&mut self, low_left: Vector, width: Width, height: Height) -> Result<()> {
         self.to_path()?;
         self.as_path()?.rect(low_left, width, height);
         Ok(())

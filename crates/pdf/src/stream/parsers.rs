@@ -1,6 +1,6 @@
 use lyon_geom::{vector, Vector};
 use lyon_path::LineCap;
-use shared::NumberError;
+use shared::{NumberError, Height, Width};
 use anyhow::Error;
 use std::str::FromStr;
 use nom::{
@@ -162,7 +162,7 @@ fn test_line_to() {
     assert_eq!(vector(-10.0, -1.0), line_to(&"-----10 +-+1 l".as_bytes()).unwrap().1);
 }
 
-fn rect(input: &[u8]) -> NomResult<(Vector<f32>, f32, f32)> {
+fn rect(input: &[u8]) -> NomResult<(Vector<f32>, Width, Height)> {
     map(
         terminated(tuple((
             ws(number_forced_to_f32), 
@@ -171,7 +171,7 @@ fn rect(input: &[u8]) -> NomResult<(Vector<f32>, f32, f32)> {
             ws(number_forced_to_f32)
         )), ws(tag("re"))),
         |(x, y, w, h)| {
-            (vector(x, y), w, h)
+            (vector(x, y), Width::new(w), Height::new(h))
         },
     )(input)
 }

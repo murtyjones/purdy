@@ -2,6 +2,7 @@ use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom, ObjectId};
 use anyhow::Result;
 use lyon_geom::Vector;
 use lyon_path::LineCap;
+use shared::{Width, Height};
 use crate::error::ParseError;
 
 use self::parsers::stream_objects;
@@ -39,7 +40,7 @@ pub enum StreamObject<'a> {
     CapStyle(LineCap),
     MoveTo(Vector<f32>),
     LineTo(Vector<f32>),
-    Rect(Vector<f32>, f32, f32),
+    Rect(Vector<f32>, Width, Height),
     Stroke,
     Fill,
 }
