@@ -40,6 +40,7 @@
 //! ```
 //!
 
+use geom::Line;
 pub use lyon_geom as geom;
 
 #[cfg(feature = "serialization")]
@@ -177,6 +178,19 @@ pub enum LineCap {
     /// If a sub-path has zero length, then the resulting effect is that the stroke for
     /// that sub-path consists solely of a full circle centered at the sub-path's point.
     Round,
+}
+
+impl LineCap {
+    pub fn set(&mut self, c: LineCap) {
+        *self = c;
+    }
+}
+
+// This is unique to PDF rendering:
+impl Default for LineCap {
+    fn default() -> Self {
+        LineCap::Square
+    }
 }
 
 /// Line join as defined by the SVG specification.

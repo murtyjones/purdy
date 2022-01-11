@@ -100,7 +100,9 @@ fn main() {
     for inst in draw_instructions {
         match inst {
             StreamObject::Text(_) => unimplemented!(),
-            StreamObject::CapStyle(_) => unimplemented!(),
+            StreamObject::CapStyle(c) => {
+                graphics_state.set_cap_style(c).unwrap();
+            },
             StreamObject::MoveTo(p) => {
                 graphics_state.move_to(p).unwrap();
             }

@@ -1,5 +1,5 @@
 use anyhow::{Result, Ok};
-use lyon_path::math::Vector;
+use lyon_path::{math::Vector, LineCap};
 use thiserror::Error;
 use lyon_path::pdf::Pdf;
 use lyon_path::builder::Build;
@@ -40,12 +40,14 @@ pub struct GraphicsState {
 #[derive(Debug)]
 struct Properties {
     line_width: LineWidth,
+    line_cap: LineCap,
 }
 
 impl Default for Properties {
     fn default() -> Self {
         Properties {
-            line_width: LineWidth::default()
+            line_width: LineWidth::default(),
+            line_cap: LineCap::default(),
         }
     }
 }
@@ -59,6 +61,10 @@ struct PageDescription {
 impl PageDescription {
     pub fn set_line_width(&mut self, w: LineWidth) {
         self.properties.line_width.set(w);
+    }
+
+    pub fn set_line_cap(&mut self, c: LineCap) {
+        self.properties.line_cap.set(c);
     }
 }
 
@@ -178,6 +184,13 @@ impl GraphicsState {
         self.to_page_description()?;
         let p = self.as_page_description()?;
         p.set_line_width(w);
+        Ok(())
+    }
+
+    pub fn set_cap_style(&mut self, c: LineCap) -> Result<()> {
+        self.to_page_description()?;
+        let p = self.as_page_description()?;
+        p.set_line_cap(c);
         Ok(())
     }
 
