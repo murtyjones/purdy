@@ -157,7 +157,7 @@ fn main() {
         .with_line_cap(LineCap::Round)
         .with_line_width(10.0);
 
-    graphics_state.finished_stroke_paths[0..].iter().for_each(|path| {
+    graphics_state.finished_stroke_paths.iter().for_each(|path| {
         stroke_tess
             .tessellate_path(
                 path,
