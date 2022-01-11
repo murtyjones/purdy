@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 thiserror = "1.0.30"
 anyhow = "1.0.52"
+derive_more = "0.99.17"

@@ -1,6 +1,6 @@
 use lyon_geom::{vector, Vector};
 use lyon_path::LineCap;
-use shared::{NumberError, Height, Width};
+use shared::{NumberError, Height, Width, LineWidth};
 use anyhow::Error;
 use std::str::FromStr;
 use nom::{
@@ -189,6 +189,15 @@ fn fill(input: &[u8]) -> NomResult<()> {
     map(ws(char('f')), |_| ())(input)
 }
 
+fn line_width(input: &[u8]) -> NomResult<LineWidth> {
+    map(terminated(
+        ws(number_forced_to_f32),
+        ws(char('w'))
+    ),
+    |w| LineWidth::new(w)
+)(input)
+}
+
 pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
     many0(alt((
         map(text, StreamObject::Text),
@@ -198,6 +207,7 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(rect, |(low_left, width, height)| StreamObject::Rect(low_left, width, height)),
         map(stroke, |_| StreamObject::Stroke),
         map(fill, |_| StreamObject::Fill),
+        map(line_width, StreamObject::LineWidth),
     )))(input)
 }
 

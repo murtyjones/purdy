@@ -114,6 +114,10 @@ fn main() {
                 graphics_state.fill().unwrap();
             }
             StreamObject::Stroke => {
+                unimplemented!();
+            }
+            StreamObject::LineWidth(w) => {
+                graphics_state.set_line_width(w).unwrap();
             }
         }
     }

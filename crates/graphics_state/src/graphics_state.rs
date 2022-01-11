@@ -3,14 +3,14 @@ use lyon_path::math::Vector;
 use thiserror::Error;
 use lyon_path::pdf::Pdf;
 use lyon_path::builder::Build;
-use shared::{Width, Height};
+use shared::{Width, Height, LineWidth};
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
     #[error("invalid state transition: tried to convert {0} to {1}")]
     InvalidStateTransition(&'static str, &'static str),
-    #[error("invalid attempt to access Path state while not in Path mode")]
-    InvalidAttemptToAccessPathGraphicsState,
+    #[error("invalid attempt to access {0} state while not in {0} mode")]
+    InvalidAttemptToAccessState(&'static str),
 }
 
 #[derive(Debug)]
@@ -38,13 +38,35 @@ pub struct GraphicsState {
 }
 
 #[derive(Debug)]
+struct Properties {
+    line_width: LineWidth,
+}
+
+impl Default for Properties {
+    fn default() -> Self {
+        Properties {
+            line_width: LineWidth::default()
+        }
+    }
+}
+
+#[derive(Debug)]
 struct PageDescription {
+    properties: Properties
     // ... Specific State Values
+}
+
+impl PageDescription {
+    pub fn set_line_width(&mut self, w: LineWidth) {
+        self.properties.line_width.set(w);
+    }
 }
 
 impl Default for PageDescription {
     fn default() -> Self {
-        PageDescription {}
+        PageDescription {
+            properties: Properties::default()
+        }
     }
 }
 
@@ -152,10 +174,23 @@ impl GraphicsState {
         Ok(())
     }
 
+    pub fn set_line_width(&mut self, w: LineWidth) -> Result<()> {
+        self.to_page_description()?;
+        let p = self.as_page_description()?;
+        p.set_line_width(w);
+    }
+
     fn as_path(&mut self) -> Result<&mut Path> {
         match &mut self.state {
             State::Path(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessPathGraphicsState.into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into())
+        }
+    }
+
+    fn as_page_description(&mut self) -> Result<&mut PageDescription> {
+        match &mut self.state {
+            State::PageDescription(data) => Ok(data),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into())
         }
     }
 
