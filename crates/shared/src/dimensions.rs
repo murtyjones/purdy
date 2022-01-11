@@ -1,15 +1,15 @@
 use std::ops::{Deref, Sub, Div, Neg};
 
 #[derive(Debug, Copy, Clone)]
-pub struct PageWidth(f32);
+pub struct Width(f32);
 
-impl PageWidth {
+impl Width {
     pub fn new(v: f32) -> Self {
-        PageWidth(v)
+        Width(v)
     }
 }
 
-impl Deref for PageWidth {
+impl Deref for Width {
     type Target = f32;
 
     fn deref(&self) -> &Self::Target {
@@ -17,7 +17,7 @@ impl Deref for PageWidth {
     }
 }
 
-impl Sub<f32> for PageWidth {
+impl Sub<f32> for Width {
     type Output = f32;
 
     fn sub(self, other: f32) -> Self::Output {
@@ -27,15 +27,15 @@ impl Sub<f32> for PageWidth {
 
 
 
-impl Sub for PageWidth {
-    type Output = PageWidth;
+impl Sub for Width {
+    type Output = Width;
 
-    fn sub(self, other: PageWidth) -> Self::Output {
-        PageWidth(self.0 - other.0)
+    fn sub(self, other: Width) -> Self::Output {
+        Width(self.0 - other.0)
     }
 }
 
-impl Div<f32> for PageWidth {
+impl Div<f32> for Width {
     // The division of rational numbers is a closed operation.
     type Output = f32;
 
@@ -44,24 +44,24 @@ impl Div<f32> for PageWidth {
     }
 }
 
-impl Neg for PageWidth {
+impl Neg for Width {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        PageWidth(-self.0)
+        Width(-self.0)
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct PageHeight(f32);
+pub struct Height(f32);
 
-impl PageHeight {
+impl Height {
     pub fn new(v: f32) -> Self {
-        PageHeight(v)
+        Height(v)
     }
 }
 
-impl Deref for PageHeight {
+impl Deref for Height {
     type Target = f32;
 
     fn deref(&self) -> &Self::Target {
@@ -69,7 +69,7 @@ impl Deref for PageHeight {
     }
 }
 
-impl Sub<f32> for PageHeight {
+impl Sub<f32> for Height {
     type Output = f32;
 
     fn sub(self, other: f32) -> Self::Output {
@@ -77,15 +77,15 @@ impl Sub<f32> for PageHeight {
     }
 }
 
-impl Sub for PageHeight {
-    type Output = PageHeight;
+impl Sub for Height {
+    type Output = Height;
 
-    fn sub(self, other: PageHeight) -> Self::Output {
-        PageHeight(self.0 - other.0)
+    fn sub(self, other: Height) -> Self::Output {
+        Height(self.0 - other.0)
     }
 }
 
-impl Div<f32> for PageHeight {
+impl Div<f32> for Height {
     // The division of rational numbers is a closed operation.
     type Output = f32;
 
@@ -94,10 +94,10 @@ impl Div<f32> for PageHeight {
     }
 }
 
-impl Neg for PageHeight {
+impl Neg for Height {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        PageHeight(-self.0)
+        Height(-self.0)
     }
 }

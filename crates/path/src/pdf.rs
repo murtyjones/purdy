@@ -6,7 +6,7 @@ use crate::{
     Attributes, EndpointId, Path,
 };
 use lyon_geom::LineSegment;
-use shared::{PageHeight, PageWidth};
+use shared::{Height, Width};
 use std::convert::TryInto;
 
 #[derive(Debug)]
@@ -15,12 +15,12 @@ pub struct Pdf {
     pub(crate) verbs: Vec<Verb>,
     first_position: Point,
     current_position: Point,
-    page_width: PageWidth,
-    page_height: PageHeight,
+    page_width: Width,
+    page_height: Height,
 }
 
 impl Pdf {
-    pub fn new(page_width: PageWidth, page_height: PageHeight) -> Self {
+    pub fn new(page_width: Width, page_height: Height) -> Self {
         let mut p = Pdf {
             points: vec![],
             verbs: vec![],
@@ -258,8 +258,8 @@ mod test {
 
     #[test]
     fn test_empty_path() {
-        let w = PageWidth::new(800.0);
-        let h = PageHeight::new(800.0);
+        let w = Width::new(800.0);
+        let h = Height::new(800.0);
         let mut pdf = Pdf::new(w, h);
         let path = pdf.build();
 
@@ -274,8 +274,8 @@ mod test {
 
     #[test]
     fn test_converts_single_line_to_rect() {
-        let w = PageWidth::new(800.0);
-        let h = PageHeight::new(800.0);
+        let w = Width::new(800.0);
+        let h = Height::new(800.0);
         let mut pdf = Pdf::new(w, h);
         pdf.line_to(vector(10.0, 10.0));
         pdf.close();
@@ -297,8 +297,8 @@ mod test {
 
     #[test]
     fn test_zero_length_line() {
-        let w = PageWidth::new(800.0);
-        let h = PageHeight::new(800.0);
+        let w = Width::new(800.0);
+        let h = Height::new(800.0);
         let mut pdf = Pdf::new(w, h);
         pdf.line_to(vector(0.0, 0.0));
         pdf.close();
