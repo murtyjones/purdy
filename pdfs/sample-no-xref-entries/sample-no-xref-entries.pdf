@@ -183,6 +183,8 @@ stream
 10 10 m
 10 10 l
 f
+% Set non-stroke color to red
+255 0 0 sc
 % Zero-area line
 20 10 m
 20 20 l

@@ -3,7 +3,7 @@ use lyon_path::{math::Vector, LineCap};
 use thiserror::Error;
 use lyon_path::pdf::Pdf;
 use lyon_path::builder::Build;
-use shared::{Width, Height, LineWidth};
+use shared::{Width, Height, LineWidth, Rgb};
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
@@ -43,6 +43,7 @@ pub struct GraphicsState {
 pub struct Properties {
     pub line_width: LineWidth,
     pub line_cap: LineCap,
+    pub non_stroke_color: Rgb,
 }
 
 impl Default for Properties {
@@ -50,6 +51,7 @@ impl Default for Properties {
         Properties {
             line_width: LineWidth::default(),
             line_cap: LineCap::default(),
+            non_stroke_color: Rgb::default(),
         }
     }
 }
@@ -190,6 +192,12 @@ impl GraphicsState {
     pub fn set_line_width(&mut self, w: LineWidth) -> Result<()> {
         self.to_page_description()?;
         self.properties.line_width.set(w);
+        Ok(())
+    }
+
+    pub fn set_non_stroke_color(&mut self, c: Rgb) -> Result<()> {
+        self.to_page_description()?;
+        self.properties.non_stroke_color.set(c);
         Ok(())
     }
 

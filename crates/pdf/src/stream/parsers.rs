@@ -13,12 +13,11 @@ use nom::{
     sequence::{delimited, pair, terminated, tuple},
 };
 use num::ToPrimitive;
-use shared::{Height, LineWidth, NumberError, Width};
+use shared::{Height, LineWidth, NumberError, Width, Rgb};
 use std::str::FromStr;
 
 use crate::{
     error::ParseError as PdfParseError,
-    rgb::Rgb,
     utils::{_name, _real, int1, take_until_unmatched, ws},
     NomError, NomResult,
 };
@@ -35,10 +34,10 @@ fn convert_result<O, E>(result: Result<O, E>, input: &[u8], error_kind: ErrorKin
 fn rg(input: &[u8]) -> NomResult<Rgb> {
     map(
         terminated(
-            tuple((ws(int1::<u8>), ws(int1::<u8>), ws(int1::<u8>))),
+            tuple((ws(number_forced_to_f32), ws(number_forced_to_f32), ws(number_forced_to_f32))),
             ws(tag("rg")),
         ),
-        |(r, g, b)| Rgb { r, g, b },
+        |(r, g, b)| Rgb::new(r, g, b),
     )(input)
 }
 
@@ -250,6 +249,16 @@ fn line_width(input: &[u8]) -> NomResult<LineWidth> {
     })(input)
 }
 
+fn set_fill(input: &[u8]) -> NomResult<Rgb> {
+    map(terminated(tuple((
+        ws(number_forced_to_f32),
+        ws(number_forced_to_f32),
+        ws(number_forced_to_f32)
+    )), ws(tag("sc"))), |(r, g, b)| {
+        Rgb::new(r, g, b)
+    })(input)
+}
+
 pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
     many0(alt((
         map(text, StreamObject::Text),
@@ -262,6 +271,7 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(stroke, |_| StreamObject::Stroke),
         map(fill, |_| StreamObject::Fill),
         map(line_width, StreamObject::LineWidth),
+        map(set_fill, StreamObject::SetNonStrokeColor),
     )))(input)
 }
 
@@ -292,7 +302,7 @@ ET";
                 StreamObject::CapStyle(LineCap::Square),
                 StreamObject::Text(TextContent {
                     font_family: b"F1".to_vec(),
-                    rgb: Some(Rgb { r: 0, g: 0, b: 0 }),
+                    rgb: Some(Rgb::new(0.0, 0.0, 0.0)),
                     font_size: 27,
                     l_r: (57.375, 722.28),
                     contents: b" Simple PDF File 2 ",

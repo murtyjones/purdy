@@ -162,6 +162,9 @@ fn main() {
             StreamObject::LineWidth(w) => {
                 graphics_state.set_line_width(w).unwrap();
             }
+            StreamObject::SetNonStrokeColor(c) => {
+                graphics_state.set_non_stroke_color(c).unwrap();
+            }
         }
     }
     
