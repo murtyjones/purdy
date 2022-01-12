@@ -182,7 +182,7 @@ fn main() {
     let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
     for _ in 0..PRIM_BUFFER_LEN {
         cpu_primitives.push(Primitive {
-            color: [1.0, 0.0, 0.0, 1.0],
+            color: [0.0, 0.0, 0.0, 1.0],
             z_index: 0,
             width: 0.0,
             translate: [0.0, 0.0],
