@@ -105,8 +105,7 @@ fn main() {
     let stroke_prim_id = 0;
     let fill_prim_id = 1;
 
-    let mut fill_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
-    let mut stroke_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
+    let mut geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
 
     let mut fill_tess = FillTessellator::new();
     let mut stroke_tess = StrokeTessellator::new();
@@ -138,7 +137,7 @@ fn main() {
                         .tessellate_path(
                             path,
                             &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                            &mut BuffersBuilder::new(&mut fill_geometry, WithId(fill_prim_id as u32)),
+                            &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
                         )
                         .unwrap();
                 });
@@ -155,7 +154,7 @@ fn main() {
                         .tessellate_path(
                             path,
                             &options,
-                            &mut BuffersBuilder::new(&mut stroke_geometry, WithId(stroke_prim_id as u32)),
+                            &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
                         )
                         .unwrap();
                 });
@@ -169,9 +168,9 @@ fn main() {
         }
     }
     
-    let fill_range = 0..(fill_geometry.indices.len() as u32);
+    let fill_range = 0..(geometry.indices.len() as u32);
 
-    let stroke_range = 0..(stroke_geometry.indices.len() as u32);
+    let stroke_range = fill_range.end..(geometry.indices.len() as u32);
 
     let mut bg_geometry: VertexBuffers<BgPoint, u16> = VertexBuffers::new();
 
@@ -186,7 +185,7 @@ fn main() {
     let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
     for _ in 0..PRIM_BUFFER_LEN {
         cpu_primitives.push(Primitive {
-            color: [0.0, 0.0, 0.0, 1.0],
+            color: [1.0, 0.0, 0.0, 1.0],
             z_index: 0,
             width: 0.0,
             translate: [0.0, 0.0],
@@ -205,7 +204,7 @@ fn main() {
     };
     // Main fill primitive
     cpu_primitives[fill_prim_id] = Primitive {
-        color: [1.0, 0.0, 0.0, 1.0],
+        color: [0.0, 0.0, 0.0, 1.0],
         z_index: num_instances as i32 + 1,
         ..Primitive::DEFAULT
     };
@@ -233,25 +232,13 @@ fn main() {
 
     let vbo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: None,
-        contents: bytemuck::cast_slice(&fill_geometry.vertices),
+        contents: bytemuck::cast_slice(&geometry.vertices),
         usage: wgpu::BufferUsages::VERTEX,
     });
 
     let ibo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: None,
-        contents: bytemuck::cast_slice(&fill_geometry.indices),
-        usage: wgpu::BufferUsages::INDEX,
-    });
-
-    let vbo_stroke = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: None,
-        contents: bytemuck::cast_slice(&stroke_geometry.vertices),
-        usage: wgpu::BufferUsages::VERTEX,
-    });
-
-    let ibo_stroke = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: None,
-        contents: bytemuck::cast_slice(&stroke_geometry.indices),
+        contents: bytemuck::cast_slice(&geometry.indices),
         usage: wgpu::BufferUsages::INDEX,
     });
 
@@ -508,10 +495,8 @@ fn main() {
         pass.set_bind_group(0, &bind_group, &[]);
         pass.set_index_buffer(ibo.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo.slice(..));
+
         pass.draw_indexed(fill_range.clone(), 0, 0..(num_instances as u32));
-        
-        pass.set_index_buffer(ibo_stroke.slice(..), wgpu::IndexFormat::Uint16);
-        pass.set_vertex_buffer(0, vbo_stroke.slice(..));
         pass.draw_indexed(stroke_range.clone(), 0, 0..1);
 
         // Draw background
