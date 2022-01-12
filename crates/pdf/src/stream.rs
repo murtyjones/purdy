@@ -1,8 +1,8 @@
-use crate::{dictionary::Dictionary, rgb::Rgb, utils::strip_nom, ObjectId};
+use crate::{dictionary::Dictionary, utils::strip_nom, ObjectId};
 use anyhow::Result;
 use lyon_geom::Vector;
 use lyon_path::LineCap;
-use shared::{Width, Height, LineWidth};
+use shared::{Width, Height, LineWidth, Rgb};
 use crate::error::ParseError;
 
 use self::parsers::stream_objects;
@@ -44,6 +44,7 @@ pub enum StreamObject<'a> {
     Stroke,
     Fill,
     LineWidth(LineWidth),
+    SetNonStrokeColor(Rgb),
 }
 
 impl<'a> Stream<'a> {

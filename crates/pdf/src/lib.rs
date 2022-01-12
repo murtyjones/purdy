@@ -10,7 +10,6 @@ mod error;
 mod macros;
 mod object;
 mod pdf;
-mod rgb;
 mod stream;
 // public for the window binary
 pub mod utils;

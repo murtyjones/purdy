@@ -4,7 +4,9 @@
 mod dimensions;
 mod error;
 mod line_width;
+mod rgb;
 
 pub use dimensions::{Width, Height};
 pub use error::NumberError;
 pub use line_width::LineWidth;
+pub use rgb::Rgb;

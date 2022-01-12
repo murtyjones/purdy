@@ -2347,6 +2347,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "approx",
  "derive_more",
  "thiserror",
 ]
