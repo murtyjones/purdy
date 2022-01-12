@@ -95,6 +95,21 @@ fn main() {
         PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
     };
     let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
+
+    // Set to 1 to disable
+    let sample_count = 1;
+
+    let num_instances: u32 = 32;
+    let tolerance = 0.02;
+
+    let stroke_prim_id = 0;
+    let fill_prim_id = 1;
+
+    let mut geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
+
+    let mut fill_tess = FillTessellator::new();
+    let mut stroke_tess = StrokeTessellator::new();
+
     let draw_instructions = drawing.as_stream().unwrap().get_content().unwrap();
     let width = Width::new(DEFAULT_WINDOW_WIDTH);
     let height = Height::new(DEFAULT_WINDOW_HEIGHT);
@@ -116,9 +131,33 @@ fn main() {
             }
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
+                let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
+                paths.iter().for_each(|path| {
+                    fill_tess
+                        .tessellate_path(
+                            path,
+                            &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
+                            &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
+                        )
+                        .unwrap();
+                });
             }
             StreamObject::Stroke => {
                 graphics_state.stroke().unwrap();
+                let paths = std::mem::replace(&mut graphics_state.finished_stroke_paths, vec![]);
+                let properties = graphics_state.properties();
+                let options = StrokeOptions::tolerance(tolerance)
+                    .with_line_cap(properties.line_cap)
+                    .with_line_width(*properties.line_width);
+                paths.iter().for_each(|path| {
+                    stroke_tess
+                        .tessellate_path(
+                            path,
+                            &options,
+                            &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
+                        )
+                        .unwrap();
+                });
             }
             StreamObject::LineWidth(w) => {
                 graphics_state.set_line_width(w).unwrap();
@@ -126,46 +165,32 @@ fn main() {
         }
     }
 
-    // Set to 1 to disable
-    let sample_count = 1;
-
-    let num_instances: u32 = 32;
-    let tolerance = 0.02;
-
-    let stroke_prim_id = 0;
-    let fill_prim_id = 1;
-
-    let mut geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
-
-    let mut fill_tess = FillTessellator::new();
-    let mut stroke_tess = StrokeTessellator::new();
-
-    graphics_state.finished_fill_paths.iter().for_each(|path| {
-        fill_tess
-            .tessellate_path(
-                path,
-                &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
-            )
-            .unwrap();
-    });
+    // graphics_state.finished_fill_paths.iter().for_each(|path| {
+    //     fill_tess
+    //         .tessellate_path(
+    //             path,
+    //             &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
+    //             &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
+    //         )
+    //         .unwrap();
+    // });
 
 
     let fill_range = 0..(geometry.indices.len() as u32);
 
-    let options = StrokeOptions::tolerance(tolerance)
-        .with_line_cap(LineCap::Round)
-        .with_line_width(10.0);
+    // let options = StrokeOptions::tolerance(tolerance)
+    //     .with_line_cap(LineCap::Round)
+    //     .with_line_width(10.0);
 
-    graphics_state.finished_stroke_paths.iter().for_each(|path| {
-        stroke_tess
-            .tessellate_path(
-                path,
-                &options,
-                &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
-            )
-            .unwrap();
-    });
+    // graphics_state.finished_stroke_paths.iter().for_each(|path| {
+    //     stroke_tess
+    //         .tessellate_path(
+    //             path,
+    //             &options,
+    //             &mut BuffersBuilder::new(&mut geometry, WithId(stroke_prim_id as u32)),
+    //         )
+    //         .unwrap();
+    // });
 
     let stroke_range = fill_range.end..(geometry.indices.len() as u32);
 

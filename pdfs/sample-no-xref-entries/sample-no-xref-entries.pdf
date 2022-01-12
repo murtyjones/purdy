@@ -195,6 +195,11 @@ f
 45 15 m
 45 15 l
 S
+% Zero-area square
+10 w 2 J
+65 15 m
+65 15 l
+S
 endstream
 endobj
 

@@ -32,16 +32,17 @@ impl Default for State {
 pub struct GraphicsState {
     pub finished_fill_paths: Vec<lyon_path::Path>,
     pub finished_stroke_paths: Vec<lyon_path::Path>,
+    pub properties: Properties,
     page_width: Width,
     page_height: Height,
     // ... Shared Values
     state: State
 }
 
-#[derive(Debug)]
-struct Properties {
-    line_width: LineWidth,
-    line_cap: LineCap,
+#[derive(Debug, Copy, Clone)]
+pub struct Properties {
+    pub line_width: LineWidth,
+    pub line_cap: LineCap,
 }
 
 impl Default for Properties {
@@ -55,25 +56,12 @@ impl Default for Properties {
 
 #[derive(Debug)]
 struct PageDescription {
-    properties: Properties
     // ... Specific State Values
-}
-
-impl PageDescription {
-    pub fn set_line_width(&mut self, w: LineWidth) {
-        self.properties.line_width.set(w);
-    }
-
-    pub fn set_line_cap(&mut self, c: LineCap) {
-        self.properties.line_cap.set(c);
-    }
 }
 
 impl Default for PageDescription {
     fn default() -> Self {
-        PageDescription {
-            properties: Properties::default()
-        }
+        PageDescription {}
     }
 }
 
@@ -144,6 +132,7 @@ impl GraphicsState {
         GraphicsState {
             finished_fill_paths: vec![],
             finished_stroke_paths: vec![],
+            properties: Properties::default(),
             page_width,
             page_height,
             // ...
@@ -151,21 +140,25 @@ impl GraphicsState {
         }
     }
 
+    pub fn properties(&self) -> Properties {
+        self.properties
+    }
+
     pub fn move_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
-        self.as_path()?.move_to(to);
+        self.as_path_mut()?.move_to(to);
         Ok(())
     }
 
     pub fn line_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
-        self.as_path()?.line_to(to);
+        self.as_path_mut()?.line_to(to);
         Ok(())
     }
 
     pub fn rect(&mut self, low_left: Vector, width: Width, height: Height) -> Result<()> {
         self.to_path()?;
-        self.as_path()?.rect(low_left, width, height);
+        self.as_path_mut()?.rect(low_left, width, height);
         Ok(())
     }
 
@@ -173,7 +166,7 @@ impl GraphicsState {
         self.to_path()?;
         let w = self.page_width;
         let h = self.page_height;
-        let mut p = std::mem::replace(self.as_path()?, Path::new(w, h));
+        let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
         p.close();
         p.make_fillable_if_needed();
         let path = p.build();
@@ -186,7 +179,7 @@ impl GraphicsState {
         self.to_path()?;
         let w = self.page_width;
         let h = self.page_height;
-        let mut p = std::mem::replace(self.as_path()?, Path::new(w, h));
+        let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
         p.close();
         let path = p.build();
         self.finished_stroke_paths.push(path);
@@ -196,27 +189,39 @@ impl GraphicsState {
 
     pub fn set_line_width(&mut self, w: LineWidth) -> Result<()> {
         self.to_page_description()?;
-        let p = self.as_page_description()?;
-        p.set_line_width(w);
+        self.properties.line_width.set(w);
         Ok(())
     }
 
     pub fn set_cap_style(&mut self, c: LineCap) -> Result<()> {
         self.to_page_description()?;
-        let p = self.as_page_description()?;
-        p.set_line_cap(c);
+        self.properties.line_cap.set(c);
         Ok(())
     }
 
-    fn as_path(&mut self) -> Result<&mut Path> {
+    fn as_path_mut(&mut self) -> Result<&mut Path> {
         match &mut self.state {
             State::Path(data) => Ok(data),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into())
         }
     }
 
-    fn as_page_description(&mut self) -> Result<&mut PageDescription> {
+    fn as_page_description_mut(&mut self) -> Result<&mut PageDescription> {
         match &mut self.state {
+            State::PageDescription(data) => Ok(data),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into())
+        }
+    }
+
+    fn as_path(&self) -> Result<&Path> {
+        match &self.state {
+            State::Path(data) => Ok(data),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into())
+        }
+    }
+
+    fn as_page_description(&self) -> Result<&PageDescription> {
+        match &self.state {
             State::PageDescription(data) => Ok(data),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into())
         }
