@@ -302,7 +302,7 @@ ET";
                 StreamObject::CapStyle(LineCap::Square),
                 StreamObject::Text(TextContent {
                     font_family: b"F1".to_vec(),
-                    rgb: Some(Rgb { r: 0, g: 0, b: 0 }),
+                    rgb: Some(Rgb::new(0.0, 0.0, 0.0)),
                     font_size: 27,
                     l_r: (57.375, 722.28),
                     contents: b" Simple PDF File 2 ",
