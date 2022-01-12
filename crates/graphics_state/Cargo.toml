@@ -11,4 +11,3 @@ lyon_path = { path = "../path" }
 shared = { path = "../shared" }
 anyhow = "1.0.52"
 thiserror = "1.0.30"
-derive_more = "0.99.17"

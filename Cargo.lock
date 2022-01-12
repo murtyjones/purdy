@@ -1062,7 +1062,6 @@ name = "graphics_state"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "derive_more",
  "lyon_geom",
  "lyon_path",
  "shared",
