@@ -11,7 +11,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 linked-hash-map = "^0.5"
 maplit = "1.0.2"
-font-kit = "0.10.0"
 lyon_geom = { path = "../geom" }
 lyon_path = { path = "../path" }
 shared = { path = "../shared" }

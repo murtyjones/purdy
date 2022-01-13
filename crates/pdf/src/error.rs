@@ -1,7 +1,6 @@
 use crate::{object::Object, ObjectId};
 use anyhow::Error;
 use core::panic;
-use font_kit::error::{FontLoadingError, SelectionError};
 use nom::{error::VerboseError, Needed};
 use std::str::Utf8Error;
 use strum_macros::Display;
@@ -33,20 +32,3 @@ pub enum ParseError {
     FailedToParseAllStreamContent,
 }
 
-// impl<'a> std::convert::From<Utf8Error> for Error<'a> {
-// 	fn from(err: Utf8Error) -> Self {
-// 		Error::String(err.to_string())
-// 	}
-// }
-
-// impl<'a> std::convert::From<FontLoadingError> for Error<'a> {
-// 	fn from(err: FontLoadingError) -> Self {
-// 		Error::FontNotLoaded(format!("{}", err))
-// 	}
-// }
-
-// impl<'a> std::convert::From<SelectionError> for Error<'a> {
-// 	fn from(err: SelectionError) -> Self {
-// 		Error::InvalidFont(format!("{}", err))
-// 	}
-// }
