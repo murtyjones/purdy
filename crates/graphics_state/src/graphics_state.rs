@@ -44,6 +44,7 @@ pub struct Properties {
     pub line_width: LineWidth,
     pub line_cap: LineCap,
     pub non_stroke_color: Rgb,
+    pub stroke_color: Rgb,
 }
 
 impl Default for Properties {
@@ -52,6 +53,7 @@ impl Default for Properties {
             line_width: LineWidth::default(),
             line_cap: LineCap::default(),
             non_stroke_color: Rgb::default(),
+            stroke_color: Rgb::default(),
         }
     }
 }
@@ -198,6 +200,12 @@ impl GraphicsState {
     pub fn set_non_stroke_color(&mut self, c: Rgb) -> Result<()> {
         self.to_page_description()?;
         self.properties.non_stroke_color.set(c);
+        Ok(())
+    }
+
+    pub fn set_stroke_color(&mut self, c: Rgb) -> Result<()> {
+        self.to_page_description()?;
+        self.properties.stroke_color.set(c);
         Ok(())
     }
 

@@ -5,8 +5,15 @@ mod dimensions;
 mod error;
 mod line_width;
 mod rgb;
+mod cmyk;
+mod gray;
+mod color;
+mod stroke_color;
 
 pub use dimensions::{Width, Height};
 pub use error::NumberError;
 pub use line_width::LineWidth;
 pub use rgb::Rgb;
+pub use cmyk::Cmyk;
+pub use gray::Gray;
+pub use stroke_color::StrokeColor;

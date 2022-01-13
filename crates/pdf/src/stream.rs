@@ -45,6 +45,7 @@ pub enum StreamObject<'a> {
     Fill,
     LineWidth(LineWidth),
     SetNonStrokeColor(Rgb),
+    SetStrokeColor(Rgb),
 }
 
 impl<'a> Stream<'a> {

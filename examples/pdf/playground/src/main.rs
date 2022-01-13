@@ -125,7 +125,7 @@ fn main() {
         [1.0, 0.0, 0.0, 1.0],
         [0.0, 1.0, 0.0, 1.0],
         [0.0, 0.0, 1.0, 1.0],
-        [1.0, 0.2, 1.3, 1.0],
+        [1.0, 0.2, 1.0, 1.0],
     ];
 
     let mut running_prim_id = 0;
@@ -199,6 +199,9 @@ fn main() {
             }
             StreamObject::SetNonStrokeColor(c) => {
                 graphics_state.set_non_stroke_color(c).unwrap();
+            }
+            StreamObject::SetStrokeColor(c) => {
+                graphics_state.set_stroke_color(c).unwrap();
             }
         }
     }

@@ -259,6 +259,16 @@ fn set_fill(input: &[u8]) -> NomResult<Rgb> {
     })(input)
 }
 
+fn set_stroke_color(input: &[u8]) -> NomResult<Rgb> {
+    map(terminated(tuple((
+        ws(number_forced_to_f32),
+        ws(number_forced_to_f32),
+        ws(number_forced_to_f32)
+    )), ws(tag("SC"))), |(r, g, b)| {
+        Rgb::new(r, g, b)
+    })(input)
+}
+
 pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
     many0(alt((
         map(text, StreamObject::Text),
@@ -272,6 +282,7 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(fill, |_| StreamObject::Fill),
         map(line_width, StreamObject::LineWidth),
         map(set_fill, StreamObject::SetNonStrokeColor),
+        map(set_stroke_color, StreamObject::SetStrokeColor),
     )))(input)
 }
 
