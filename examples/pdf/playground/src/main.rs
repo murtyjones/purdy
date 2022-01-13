@@ -99,7 +99,6 @@ fn main() {
     // Set to 1 to disable
     let sample_count = 1;
 
-    let num_instances: u32 = 32;
     let tolerance = 0.02;
 
     let stroke_prim_id = 0;
@@ -186,7 +185,7 @@ fn main() {
     let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
     for _ in 0..PRIM_BUFFER_LEN {
         cpu_primitives.push(Primitive {
-            color: [1.0, 0.0, 0.0, 1.0],
+            color: [0.0, 0.0, 0.0, 1.0],
             z_index: 0,
             width: 0.0,
             translate: [0.0, 0.0],
@@ -198,15 +197,13 @@ fn main() {
     // Stroke primitive
     cpu_primitives[stroke_prim_id] = Primitive {
         color: [0.0, 1.0, 0.0, 1.0],
-        z_index: num_instances as i32 + 2,
         // TODO: Why 5.0? Stroke width / 2?
         width: 5.0,
         ..Primitive::DEFAULT
     };
     // Main fill primitive
     cpu_primitives[fill_prim_id] = Primitive {
-        color: [0.0, 0.0, 0.0, 1.0],
-        z_index: num_instances as i32 + 1,
+        color: [0.0, 0.0, 1.0, 1.0],
         ..Primitive::DEFAULT
     };
 
@@ -509,7 +506,7 @@ fn main() {
 
         pass.set_index_buffer(ibo_fill.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_fill.slice(..));
-        pass.draw_indexed(fill_range.clone(), 0, 0..(num_instances as u32));
+        pass.draw_indexed(fill_range.clone(), 0, 0..1);
 
         pass.set_index_buffer(ibo_stroke.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_stroke.slice(..));
