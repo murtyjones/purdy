@@ -22,7 +22,6 @@ const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
 
-
 #[repr(C)]
 #[derive(Copy, Clone)]
 struct Globals {
@@ -46,7 +45,7 @@ unsafe impl bytemuck::Pod for GpuVertex {}
 unsafe impl bytemuck::Zeroable for GpuVertex {}
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 struct Primitive {
     color: [f32; 4],
     translate: [f32; 2],
@@ -85,6 +84,14 @@ unsafe impl bytemuck::Zeroable for BgPoint {}
 const DEFAULT_WINDOW_WIDTH: f32 = 612.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
+// WithId determines which primitive to use for a geometry
+// so we need to call tessellate_path for each stroke or fill with a distinct color
+// and each of those must have a primitive index
+
+// stick with 256 slots for now
+// start i = 0
+// with each fill/stroke command, store in cpu primitive, tesselate, and bump index
+
 fn main() {
     // Number of samples for anti-aliasing
     let pdf = {
@@ -101,8 +108,27 @@ fn main() {
 
     let tolerance = 0.02;
 
-    let stroke_prim_id = 0;
-    let fill_prim_id = 1;
+    let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
+    for _ in 0..PRIM_BUFFER_LEN {
+        cpu_primitives.push(Primitive {
+            color: [0.0, 0.0, 0.0, 1.0],
+            z_index: 0,
+            width: 0.0,
+            translate: [0.0, 0.0],
+            angle: 0.0,
+            ..Primitive::DEFAULT
+        });
+    }
+
+    let colors = [
+        [1.0, 1.0, 0.3, 1.0],
+        [1.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 1.0],
+        [1.0, 0.2, 1.3, 1.0],
+    ];
+
+    let mut running_prim_id = 0;
 
     let mut fill_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
     let mut stroke_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
@@ -132,15 +158,19 @@ fn main() {
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
                 let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
+                // TODO: Use color from graphics state
+                let hacked_color = colors[running_prim_id];
+                cpu_primitives[running_prim_id].color = hacked_color;
                 paths.iter().for_each(|path| {
                     fill_tess
                         .tessellate_path(
                             path,
                             &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                            &mut BuffersBuilder::new(&mut fill_geometry, WithId(fill_prim_id as u32)),
+                            &mut BuffersBuilder::new(&mut fill_geometry, WithId(running_prim_id as u32)),
                         )
                         .unwrap();
                 });
+                running_prim_id += 1;
             }
             StreamObject::Stroke => {
                 graphics_state.stroke().unwrap();
@@ -149,15 +179,20 @@ fn main() {
                 let options = StrokeOptions::tolerance(tolerance)
                     .with_line_cap(properties.line_cap)
                     .with_line_width(*properties.line_width);
+                // TODO: Use color from graphics state
+                let hacked_color = colors[running_prim_id];
+                cpu_primitives[running_prim_id].color = hacked_color;
+                cpu_primitives[running_prim_id].width = 5.0;
                 paths.iter().for_each(|path| {
                     stroke_tess
                         .tessellate_path(
                             path,
                             &options,
-                            &mut BuffersBuilder::new(&mut stroke_geometry, WithId(stroke_prim_id as u32)),
+                            &mut BuffersBuilder::new(&mut stroke_geometry, WithId(running_prim_id as u32)),
                         )
                         .unwrap();
                 });
+                running_prim_id += 1;
             }
             StreamObject::LineWidth(w) => {
                 graphics_state.set_line_width(w).unwrap();
@@ -182,30 +217,19 @@ fn main() {
         )
         .unwrap();
 
-    let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
-    for _ in 0..PRIM_BUFFER_LEN {
-        cpu_primitives.push(Primitive {
-            color: [0.0, 0.0, 0.0, 1.0],
-            z_index: 0,
-            width: 0.0,
-            translate: [0.0, 0.0],
-            angle: 0.0,
-            ..Primitive::DEFAULT
-        });
-    }
-
-    // Stroke primitive
-    cpu_primitives[stroke_prim_id] = Primitive {
-        color: [0.0, 1.0, 0.0, 1.0],
-        // TODO: Why 5.0? Stroke width / 2?
-        width: 5.0,
-        ..Primitive::DEFAULT
-    };
-    // Main fill primitive
-    cpu_primitives[fill_prim_id] = Primitive {
-        color: [0.0, 0.0, 1.0, 1.0],
-        ..Primitive::DEFAULT
-    };
+    // // Stroke primitive
+    // cpu_primitives[stroke_prim_id] = Primitive {
+    //     color: [0.0, 1.0, 0.0, 1.0],
+    //     // TODO: Why 5.0? Stroke width / 2?
+    //     width: 5.0,
+    //     ..Primitive::DEFAULT
+    // };
+    // // Main fill primitive
+    // cpu_primitives[fill_prim_id] = Primitive {
+    //     color: [0.0, 0.0, 1.0, 1.0],
+    //     width: 5.0,
+    //     ..Primitive::DEFAULT
+    // };
 
     // create an instance
     let instance = wgpu::Instance::new(wgpu::Backends::all());
@@ -354,16 +378,19 @@ fn main() {
                 array_stride: std::mem::size_of::<GpuVertex>() as u64,
                 step_mode: wgpu::VertexStepMode::Vertex,
                 attributes: &[
+                    // position:
                     wgpu::VertexAttribute {
                         offset: 0,
                         format: wgpu::VertexFormat::Float32x2,
                         shader_location: 0,
                     },
+                    // normal:
                     wgpu::VertexAttribute {
                         offset: 8,
                         format: wgpu::VertexFormat::Float32x2,
                         shader_location: 1,
                     },
+                    // prim_id:
                     wgpu::VertexAttribute {
                         offset: 16,
                         format: wgpu::VertexFormat::Uint32,
@@ -506,10 +533,12 @@ fn main() {
 
         pass.set_index_buffer(ibo_fill.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_fill.slice(..));
+        // 0..1 = red fill, 1..2 = black fill, 2..3 = black
         pass.draw_indexed(fill_range.clone(), 0, 0..1);
 
         pass.set_index_buffer(ibo_stroke.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_stroke.slice(..));
+        // 0..1 = green fill, 1..2 = red fill, 2..3 = white/clear
         pass.draw_indexed(stroke_range.clone(), 0, 0..1);
 
         // Draw background
