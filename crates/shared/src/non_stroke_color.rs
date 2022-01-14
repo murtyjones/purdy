@@ -1,21 +1,20 @@
 use anyhow::Result;
 
-use crate::color::{ColorSpace, Color, ColorError};
-use crate::{Rgb, Cmyk, Gray, ColorSpaceWithColor};
+use crate::{Rgb, Cmyk, Gray, ColorSpaceWithColor, ColorSpace, Color, ColorError};
 
 #[derive(Debug, Clone, Copy)]
-pub struct StrokeColor {
+pub struct NonStrokeColor {
     pub color_space: ColorSpace,
     pub rgb: Rgb,
     pub cmyk: Cmyk,
     pub gray: Gray,
 }
 
-impl Default for StrokeColor {
+impl Default for NonStrokeColor {
     fn default() -> Self {
-        StrokeColor { 
+        NonStrokeColor { 
             // TODO: Confirm these values with the PDF spec
-            color_space: ColorSpace::DeviceGray,
+            color_space: ColorSpace::DeviceRGB,
             rgb: Rgb::new(0.0, 0.0, 0.0),
             gray: Gray::new(0.0),
             cmyk: Cmyk::new(0.0, 0.0, 0.0, 0.0),
@@ -23,7 +22,7 @@ impl Default for StrokeColor {
     }
 }
 
-impl Color for StrokeColor {
+impl Color for NonStrokeColor {
     fn set_color_space(&mut self, c: ColorSpace) {
         self.color_space = c;
     }

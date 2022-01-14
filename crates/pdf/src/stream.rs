@@ -2,7 +2,7 @@ use crate::{dictionary::Dictionary, utils::strip_nom, ObjectId};
 use anyhow::Result;
 use lyon_geom::Vector;
 use lyon_path::LineCap;
-use shared::{Width, Height, LineWidth, Rgb};
+use shared::{Width, Height, LineWidth, Rgb, ColorSpace};
 use crate::error::ParseError;
 
 use self::parsers::stream_objects;
@@ -44,14 +44,17 @@ pub enum StreamObject<'a> {
     Stroke,
     Fill,
     LineWidth(LineWidth),
-    SetNonStrokeColor(Rgb),
-    SetStrokeColor(Rgb),
+    SetNonStrokeColor(Vec<f32>),
+    SetStrokeColor(Vec<f32>),
+    SetStrokeColorSpace(ColorSpace),
+    SetNonStrokeColorSpace(ColorSpace),
 }
 
 impl<'a> Stream<'a> {
     pub fn get_content(&self) -> Result<Vec<StreamObject<'a>>> {
         let (rest, content) = stream_objects(self.content)?;
         if !rest.is_empty() {
+            panic!("{:?}", rest);
             return Err(ParseError::FailedToParseAllStreamContent.into());
         }
         Ok(content)

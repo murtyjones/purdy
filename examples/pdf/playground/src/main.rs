@@ -1,15 +1,16 @@
+use graphics_state::{GraphicsState, Height, Width};
 use lyon::geom::Box2D;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
-use lyon::path::LineCap;
 use lyon::path::pdf::Pdf;
-use pdf::utils::read_file_bytes;
-use pdf::{Pdf as PdfDocument, StreamObject};
+use lyon::path::LineCap;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
-use graphics_state::{GraphicsState, Width, Height};
+use pdf::utils::read_file_bytes;
+use pdf::{Pdf as PdfDocument, StreamObject};
+use shared::{Color, ColorSpaceWithColor};
 use std::io::Write;
 
 // For create_buffer_init()
@@ -70,6 +71,15 @@ impl Primitive {
     };
 }
 
+fn make_color_slice(color: ColorSpaceWithColor) -> [f32; 4] {
+    match color {
+        ColorSpaceWithColor::DeviceCMYK(_) => unimplemented!(),
+        // FIXME: annoying that the shader requires the order to be inverted...
+        ColorSpaceWithColor::DeviceRGB(c) => [c.blue(), c.green(), c.red(), 1.0],
+        ColorSpaceWithColor::DeviceGray(_) => unimplemented!(),
+    }
+}
+
 unsafe impl bytemuck::Pod for Primitive {}
 unsafe impl bytemuck::Zeroable for Primitive {}
 
@@ -101,7 +111,10 @@ fn main() {
         ));
         PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
     };
-    let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
+    let drawing = pdf
+        .document
+        .get_object((11, 0))
+        .expect("couldn't find the drawing instructions");
 
     // Set to 1 to disable
     let sample_count = 1;
@@ -120,14 +133,6 @@ fn main() {
         });
     }
 
-    let colors = [
-        [1.0, 1.0, 0.3, 1.0],
-        [1.0, 0.0, 0.0, 1.0],
-        [0.0, 1.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0, 1.0],
-        [1.0, 0.2, 1.0, 1.0],
-    ];
-
     let mut running_prim_id = 0;
 
     let mut fill_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
@@ -145,7 +150,7 @@ fn main() {
             StreamObject::Text(_) => unimplemented!(),
             StreamObject::CapStyle(c) => {
                 graphics_state.set_cap_style(c).unwrap();
-            },
+            }
             StreamObject::MoveTo(p) => {
                 graphics_state.move_to(p).unwrap();
             }
@@ -158,15 +163,21 @@ fn main() {
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
                 let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
-                // TODO: Use color from graphics state
-                let hacked_color = colors[running_prim_id];
-                cpu_primitives[running_prim_id].color = hacked_color;
+                let color = graphics_state
+                    .properties
+                    .non_stroke_color
+                    .get_current_color();
+                cpu_primitives[running_prim_id].color = make_color_slice(color);
                 paths.iter().for_each(|path| {
                     fill_tess
                         .tessellate_path(
                             path,
-                            &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                            &mut BuffersBuilder::new(&mut fill_geometry, WithId(running_prim_id as u32)),
+                            &FillOptions::tolerance(tolerance)
+                                .with_fill_rule(tessellation::FillRule::NonZero),
+                            &mut BuffersBuilder::new(
+                                &mut fill_geometry,
+                                WithId(running_prim_id as u32),
+                            ),
                         )
                         .unwrap();
                 });
@@ -179,16 +190,18 @@ fn main() {
                 let options = StrokeOptions::tolerance(tolerance)
                     .with_line_cap(properties.line_cap)
                     .with_line_width(*properties.line_width);
-                // TODO: Use color from graphics state
-                let hacked_color = colors[running_prim_id];
-                cpu_primitives[running_prim_id].color = hacked_color;
+                let color = graphics_state.properties.stroke_color.get_current_color();
+                cpu_primitives[running_prim_id].color = make_color_slice(color);
                 cpu_primitives[running_prim_id].width = 5.0;
                 paths.iter().for_each(|path| {
                     stroke_tess
                         .tessellate_path(
                             path,
                             &options,
-                            &mut BuffersBuilder::new(&mut stroke_geometry, WithId(running_prim_id as u32)),
+                            &mut BuffersBuilder::new(
+                                &mut stroke_geometry,
+                                WithId(running_prim_id as u32),
+                            ),
                         )
                         .unwrap();
                 });
@@ -203,9 +216,15 @@ fn main() {
             StreamObject::SetStrokeColor(c) => {
                 graphics_state.set_stroke_color(c).unwrap();
             }
+            StreamObject::SetStrokeColorSpace(cs) => {
+                graphics_state.set_stroke_color_space(cs).unwrap();
+            }
+            StreamObject::SetNonStrokeColorSpace(cs) => {
+                graphics_state.set_non_stroke_color_space(cs).unwrap();
+            }
         }
     }
-    
+
     let fill_range = 0..(fill_geometry.indices.len() as u32);
 
     let stroke_range = 0..(stroke_geometry.indices.len() as u32);
@@ -596,7 +615,13 @@ fn main() {
 
     queue.submit(Some(encoder.finish()));
 
-    block_on(write_to_disk(OUTPUT, device, buffer_dimensions, output_buffer)).unwrap();
+    block_on(write_to_disk(
+        OUTPUT,
+        device,
+        buffer_dimensions,
+        output_buffer,
+    ))
+    .unwrap();
 }
 
 /// This vertex constructor forwards the positions and normals provided by the

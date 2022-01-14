@@ -13,5 +13,6 @@ graphics_state = {path = "../../../crates/graphics_state"}
 image = "0.23"
 lyon = {path = "../../../crates/lyon", features = ["extra"]}
 pdf = {path = "../../../crates/pdf"}
+shared = {path = "../../../crates/shared"}
 png = "0.16"
 wgpu = "0.11.1"
