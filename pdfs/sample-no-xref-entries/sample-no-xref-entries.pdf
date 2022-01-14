@@ -186,28 +186,6 @@ stream
 10 10 m
 10 10 l
 f
-% Set non-stroke color to red
-1 0 0 sc
-% Zero-area line
-20 10 m
-20 20 l
-f
-% Zero-width rect
-0 1 0 sc
-30 10 0 10 re
-f
-% Zero-area circle
-0 0 1 SC
-10 w 1 J
-45 15 m
-45 15 l
-S
-1 0.2 1 SC
-% Zero-area square
-10 w 2 J
-65 15 m
-65 15 l
-S
 endstream
 endobj
 

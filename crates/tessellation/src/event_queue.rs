@@ -1,3 +1,5 @@
+use lyon_path::geom::vector;
+
 use crate::fill::{compare_positions, is_after};
 use crate::geom::{CubicBezierSegment, QuadraticBezierSegment};
 use crate::math::{point, Point};
@@ -42,8 +44,8 @@ pub(crate) struct EdgeData {
 pub struct EventQueue {
     pub(crate) events: Vec<Event>,
     pub(crate) edge_data: Vec<EdgeData>,
-    first: TessEventId,
-    sorted: bool,
+    pub first: TessEventId,
+    pub sorted: bool,
 }
 
 impl Default for EventQueue {
@@ -458,14 +460,14 @@ impl EventQueue {
 
 #[derive(Debug)]
 pub struct EventQueueBuilder {
-    current: Point,
-    prev: Point,
-    second: Point,
-    nth: u32,
-    queue: EventQueue,
-    tolerance: f32,
-    prev_endpoint_id: EndpointId,
-    validator: DebugValidator,
+    pub current: Point,
+    pub prev: Point,
+    pub second: Point,
+    pub nth: u32,
+    pub queue: EventQueue,
+    pub tolerance: f32,
+    pub prev_endpoint_id: EndpointId,
+    pub validator: DebugValidator,
 }
 
 impl EventQueueBuilder {
@@ -668,10 +670,10 @@ impl EventQueueBuilder {
     }
 
     pub fn end(&mut self, first: Point, first_endpoint_id: EndpointId) {
-        if self.nth == 0 {
-            self.validator.end();
-            return;
-        }
+        // if self.nth == 0 {
+        //     self.validator.end();
+        //     return;
+        // }
 
         // Unless we are already back to the first point, we need to
         // to insert an edge.
@@ -682,6 +684,13 @@ impl EventQueueBuilder {
         // and have to do it now.
         if is_after(first, self.prev) && is_after(first, self.second) {
             self.vertex_event(first, first_endpoint_id);
+        }
+
+        // TODO: This is hacked into place, what unintended side effects could occur?
+        if self.prev.x.is_nan() && self.second.x.is_nan() {
+            self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
+            self.line_segment(first + vector(1.0, 1.0), first_endpoint_id, 0.0, 1.0);
+            self.line_segment(first, first_endpoint_id, 0.0, 1.0);
         }
 
         self.validator.end();
