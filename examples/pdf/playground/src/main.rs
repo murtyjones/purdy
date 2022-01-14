@@ -1,15 +1,16 @@
+use graphics_state::{GraphicsState, Height, Width};
 use lyon::geom::Box2D;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
-use lyon::path::LineCap;
 use lyon::path::pdf::Pdf;
-use pdf::utils::read_file_bytes;
-use pdf::{Pdf as PdfDocument, StreamObject};
+use lyon::path::LineCap;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
 use lyon::tessellation::{FillOptions, FillTessellator};
-use graphics_state::{GraphicsState, Width, Height};
+use pdf::utils::read_file_bytes;
+use pdf::{Pdf as PdfDocument, StreamObject};
+use shared::{Color, ColorSpaceWithColor};
 use std::io::Write;
 
 // For create_buffer_init()
@@ -21,7 +22,6 @@ use std::num::NonZeroU32;
 const PRIM_BUFFER_LEN: usize = 256;
 
 const OUTPUT: &'static str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
-
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -46,7 +46,7 @@ unsafe impl bytemuck::Pod for GpuVertex {}
 unsafe impl bytemuck::Zeroable for GpuVertex {}
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 struct Primitive {
     color: [f32; 4],
     translate: [f32; 2],
@@ -71,6 +71,15 @@ impl Primitive {
     };
 }
 
+fn make_color_slice(color: ColorSpaceWithColor) -> [f32; 4] {
+    match color {
+        ColorSpaceWithColor::DeviceCMYK(_) => unimplemented!(),
+        // FIXME: annoying that the shader requires the order to be inverted...
+        ColorSpaceWithColor::DeviceRGB(c) => [c.blue(), c.green(), c.red(), 1.0],
+        ColorSpaceWithColor::DeviceGray(_) => unimplemented!(),
+    }
+}
+
 unsafe impl bytemuck::Pod for Primitive {}
 unsafe impl bytemuck::Zeroable for Primitive {}
 
@@ -85,6 +94,14 @@ unsafe impl bytemuck::Zeroable for BgPoint {}
 const DEFAULT_WINDOW_WIDTH: f32 = 612.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
+// WithId determines which primitive to use for a geometry
+// so we need to call tessellate_path for each stroke or fill with a distinct color
+// and each of those must have a primitive index
+
+// stick with 256 slots for now
+// start i = 0
+// with each fill/stroke command, store in cpu primitive, tesselate, and bump index
+
 fn main() {
     // Number of samples for anti-aliasing
     let pdf = {
@@ -94,15 +111,29 @@ fn main() {
         ));
         PdfDocument::from_bytes(&bytes).expect("could't parse PDF")
     };
-    let drawing = pdf.document.get_object((11, 0)).expect("couldn't find the drawing instructions");
+    let drawing = pdf
+        .document
+        .get_object((11, 0))
+        .expect("couldn't find the drawing instructions");
 
     // Set to 1 to disable
     let sample_count = 1;
 
     let tolerance = 0.02;
 
-    let stroke_prim_id = 0;
-    let fill_prim_id = 1;
+    let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
+    for _ in 0..PRIM_BUFFER_LEN {
+        cpu_primitives.push(Primitive {
+            color: [0.0, 0.0, 0.0, 1.0],
+            z_index: 0,
+            width: 0.0,
+            translate: [0.0, 0.0],
+            angle: 0.0,
+            ..Primitive::DEFAULT
+        });
+    }
+
+    let mut running_prim_id = 0;
 
     let mut fill_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
     let mut stroke_geometry: VertexBuffers<GpuVertex, u16> = VertexBuffers::new();
@@ -119,7 +150,7 @@ fn main() {
             StreamObject::Text(_) => unimplemented!(),
             StreamObject::CapStyle(c) => {
                 graphics_state.set_cap_style(c).unwrap();
-            },
+            }
             StreamObject::MoveTo(p) => {
                 graphics_state.move_to(p).unwrap();
             }
@@ -132,15 +163,25 @@ fn main() {
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
                 let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
+                let color = graphics_state
+                    .properties
+                    .non_stroke_color
+                    .get_current_color();
+                cpu_primitives[running_prim_id].color = make_color_slice(color);
                 paths.iter().for_each(|path| {
                     fill_tess
                         .tessellate_path(
                             path,
-                            &FillOptions::tolerance(tolerance).with_fill_rule(tessellation::FillRule::NonZero),
-                            &mut BuffersBuilder::new(&mut fill_geometry, WithId(fill_prim_id as u32)),
+                            &FillOptions::tolerance(tolerance)
+                                .with_fill_rule(tessellation::FillRule::NonZero),
+                            &mut BuffersBuilder::new(
+                                &mut fill_geometry,
+                                WithId(running_prim_id as u32),
+                            ),
                         )
                         .unwrap();
                 });
+                running_prim_id += 1;
             }
             StreamObject::Stroke => {
                 graphics_state.stroke().unwrap();
@@ -149,15 +190,22 @@ fn main() {
                 let options = StrokeOptions::tolerance(tolerance)
                     .with_line_cap(properties.line_cap)
                     .with_line_width(*properties.line_width);
+                let color = graphics_state.properties.stroke_color.get_current_color();
+                cpu_primitives[running_prim_id].color = make_color_slice(color);
+                cpu_primitives[running_prim_id].width = 5.0;
                 paths.iter().for_each(|path| {
                     stroke_tess
                         .tessellate_path(
                             path,
                             &options,
-                            &mut BuffersBuilder::new(&mut stroke_geometry, WithId(stroke_prim_id as u32)),
+                            &mut BuffersBuilder::new(
+                                &mut stroke_geometry,
+                                WithId(running_prim_id as u32),
+                            ),
                         )
                         .unwrap();
                 });
+                running_prim_id += 1;
             }
             StreamObject::LineWidth(w) => {
                 graphics_state.set_line_width(w).unwrap();
@@ -165,9 +213,18 @@ fn main() {
             StreamObject::SetNonStrokeColor(c) => {
                 graphics_state.set_non_stroke_color(c).unwrap();
             }
+            StreamObject::SetStrokeColor(c) => {
+                graphics_state.set_stroke_color(c).unwrap();
+            }
+            StreamObject::SetStrokeColorSpace(cs) => {
+                graphics_state.set_stroke_color_space(cs).unwrap();
+            }
+            StreamObject::SetNonStrokeColorSpace(cs) => {
+                graphics_state.set_non_stroke_color_space(cs).unwrap();
+            }
         }
     }
-    
+
     let fill_range = 0..(fill_geometry.indices.len() as u32);
 
     let stroke_range = 0..(stroke_geometry.indices.len() as u32);
@@ -182,30 +239,19 @@ fn main() {
         )
         .unwrap();
 
-    let mut cpu_primitives = Vec::with_capacity(PRIM_BUFFER_LEN);
-    for _ in 0..PRIM_BUFFER_LEN {
-        cpu_primitives.push(Primitive {
-            color: [0.0, 0.0, 0.0, 1.0],
-            z_index: 0,
-            width: 0.0,
-            translate: [0.0, 0.0],
-            angle: 0.0,
-            ..Primitive::DEFAULT
-        });
-    }
-
-    // Stroke primitive
-    cpu_primitives[stroke_prim_id] = Primitive {
-        color: [0.0, 1.0, 0.0, 1.0],
-        // TODO: Why 5.0? Stroke width / 2?
-        width: 5.0,
-        ..Primitive::DEFAULT
-    };
-    // Main fill primitive
-    cpu_primitives[fill_prim_id] = Primitive {
-        color: [0.0, 0.0, 1.0, 1.0],
-        ..Primitive::DEFAULT
-    };
+    // // Stroke primitive
+    // cpu_primitives[stroke_prim_id] = Primitive {
+    //     color: [0.0, 1.0, 0.0, 1.0],
+    //     // TODO: Why 5.0? Stroke width / 2?
+    //     width: 5.0,
+    //     ..Primitive::DEFAULT
+    // };
+    // // Main fill primitive
+    // cpu_primitives[fill_prim_id] = Primitive {
+    //     color: [0.0, 0.0, 1.0, 1.0],
+    //     width: 5.0,
+    //     ..Primitive::DEFAULT
+    // };
 
     // create an instance
     let instance = wgpu::Instance::new(wgpu::Backends::all());
@@ -354,16 +400,19 @@ fn main() {
                 array_stride: std::mem::size_of::<GpuVertex>() as u64,
                 step_mode: wgpu::VertexStepMode::Vertex,
                 attributes: &[
+                    // position:
                     wgpu::VertexAttribute {
                         offset: 0,
                         format: wgpu::VertexFormat::Float32x2,
                         shader_location: 0,
                     },
+                    // normal:
                     wgpu::VertexAttribute {
                         offset: 8,
                         format: wgpu::VertexFormat::Float32x2,
                         shader_location: 1,
                     },
+                    // prim_id:
                     wgpu::VertexAttribute {
                         offset: 16,
                         format: wgpu::VertexFormat::Uint32,
@@ -506,10 +555,12 @@ fn main() {
 
         pass.set_index_buffer(ibo_fill.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_fill.slice(..));
+        // 0..1 = red fill, 1..2 = black fill, 2..3 = black
         pass.draw_indexed(fill_range.clone(), 0, 0..1);
 
         pass.set_index_buffer(ibo_stroke.slice(..), wgpu::IndexFormat::Uint16);
         pass.set_vertex_buffer(0, vbo_stroke.slice(..));
+        // 0..1 = green fill, 1..2 = red fill, 2..3 = white/clear
         pass.draw_indexed(stroke_range.clone(), 0, 0..1);
 
         // Draw background
@@ -564,7 +615,13 @@ fn main() {
 
     queue.submit(Some(encoder.finish()));
 
-    block_on(write_to_disk(OUTPUT, device, buffer_dimensions, output_buffer)).unwrap();
+    block_on(write_to_disk(
+        OUTPUT,
+        device,
+        buffer_dimensions,
+        output_buffer,
+    ))
+    .unwrap();
 }
 
 /// This vertex constructor forwards the positions and normals provided by the

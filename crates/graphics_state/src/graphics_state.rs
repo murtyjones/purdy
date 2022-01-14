@@ -3,7 +3,7 @@ use lyon_path::{math::Vector, LineCap};
 use thiserror::Error;
 use lyon_path::pdf::Pdf;
 use lyon_path::builder::Build;
-use shared::{Width, Height, LineWidth, Rgb};
+use shared::{Width, Height, LineWidth, Rgb, StrokeColor, NonStrokeColor, Color, ColorSpace};
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
@@ -43,7 +43,8 @@ pub struct GraphicsState {
 pub struct Properties {
     pub line_width: LineWidth,
     pub line_cap: LineCap,
-    pub non_stroke_color: Rgb,
+    pub stroke_color: StrokeColor,
+    pub non_stroke_color: NonStrokeColor,
 }
 
 impl Default for Properties {
@@ -51,7 +52,8 @@ impl Default for Properties {
         Properties {
             line_width: LineWidth::default(),
             line_cap: LineCap::default(),
-            non_stroke_color: Rgb::default(),
+            stroke_color: StrokeColor::default(),
+            non_stroke_color: NonStrokeColor::default(),
         }
     }
 }
@@ -195,9 +197,25 @@ impl GraphicsState {
         Ok(())
     }
 
-    pub fn set_non_stroke_color(&mut self, c: Rgb) -> Result<()> {
+    pub fn set_non_stroke_color(&mut self, c: Vec<f32>) -> Result<()> {
         self.to_page_description()?;
-        self.properties.non_stroke_color.set(c);
+        self.properties.non_stroke_color.set_color(c)
+    }
+
+    pub fn set_stroke_color(&mut self, c: Vec<f32>) -> Result<()> {
+        self.to_page_description()?;
+        self.properties.stroke_color.set_color(c)
+    }
+
+    pub fn set_non_stroke_color_space(&mut self, c: ColorSpace) -> Result<()> {
+        self.to_page_description()?;
+        self.properties.non_stroke_color.set_color_space(c);
+        Ok(())
+    }
+
+    pub fn set_stroke_color_space(&mut self, c: ColorSpace) -> Result<()> {
+        self.to_page_description()?;
+        self.properties.stroke_color.set_color_space(c);
         Ok(())
     }
 
