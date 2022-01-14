@@ -192,7 +192,7 @@ fn main() {
                     .with_line_width(*properties.line_width);
                 let color = graphics_state.properties.stroke_color.get_current_color();
                 cpu_primitives[running_prim_id].color = make_color_slice(color);
-                cpu_primitives[running_prim_id].width = 5.0;
+                cpu_primitives[running_prim_id].width = (*properties.line_width) / 2.0;
                 paths.iter().for_each(|path| {
                     stroke_tess
                         .tessellate_path(

@@ -124,16 +124,6 @@ impl Pdf {
         let to = vector(to.x, -to.y);
         let to = self.bottom_left_corner + to;
 
-        // Ensure that the line will be visible even if it's only a dot:
-        let absolute_change = (self.current_position - to).abs();
-        let minimum_distance = vector(0.6, 0.6);
-        let to = if absolute_change.x < minimum_distance.x && absolute_change.y < minimum_distance.y
-        {
-            point(self.current_position.x + minimum_distance.x, to.y)
-        } else {
-            to
-        };
-
         // TODO: Create validator
         // self.validator.edge();
         nan_check(to);
@@ -326,15 +316,5 @@ mod test {
         assert_relative_eq_boxed_pt_slice(path.points, expected_points);
         let expected_verbs: Box<[Verb]> = Box::new([Begin, LineTo, LineTo, LineTo, Close]);
         assert_eq!(path.verbs, expected_verbs);
-    }
-
-    #[test]
-    fn test_zero_length_line() {
-        let w = Width::new(800.0);
-        let h = Height::new(800.0);
-        let mut pdf = Pdf::new(w, h);
-        pdf.line_to(vector(0.0, 0.0));
-        pdf.close();
-        assert_relative_eq!(pdf.points[1].x - pdf.points[0].x, 0.6, epsilon = 1e-5f32);
     }
 }
