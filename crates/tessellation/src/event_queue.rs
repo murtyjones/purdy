@@ -19,6 +19,7 @@ pub(crate) type TessEventId = u32;
 
 pub(crate) const INVALID_EVENT_ID: TessEventId = u32::MAX;
 
+#[derive(Debug)]
 pub(crate) struct Event {
     pub next_sibling: TessEventId,
     pub next_event: TessEventId,
@@ -35,6 +36,7 @@ pub(crate) struct EdgeData {
     pub to_id: EndpointId,
 }
 
+#[derive(Debug)]
 #[doc(hidden)]
 /// A queue of sorted events for the fill tessellator's sweep-line algorithm.
 pub struct EventQueue {
@@ -454,6 +456,7 @@ impl EventQueue {
     }
 }
 
+#[derive(Debug)]
 pub struct EventQueueBuilder {
     current: Point,
     prev: Point,
