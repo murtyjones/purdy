@@ -687,6 +687,7 @@ impl EventQueueBuilder {
         }
 
         // TODO: This is hacked into place, what unintended side effects could occur?
+        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.
         if self.prev.x.is_nan() && self.second.x.is_nan() {
             self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
             self.line_segment(first + vector(1.0, 1.0), first_endpoint_id, 0.0, 1.0);
