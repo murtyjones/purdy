@@ -112,9 +112,14 @@ pub fn hex_char2(input: &[u8]) -> NomResult<u8> {
 
 fn comment(input: &[u8]) -> NomResult<()> {
     map(
-        tuple((tag(b"%"), take_while(|c: u8| !b"\r\n".contains(&c)), eol)),
+        tuple((char('%'), take_while(|c: u8| !b"\r\n".contains(&c)), eol)),
         |_| (),
     )(input)
+}
+
+#[test]
+fn test_comment() {
+    assert_eq!(comment("%hi\n".as_bytes()).unwrap(), ("".as_bytes(), ()));
 }
 
 fn space_or_comment<'a, E: ParseError<&'a [u8]>>(
@@ -123,7 +128,7 @@ fn space_or_comment<'a, E: ParseError<&'a [u8]>>(
     Ok(fold_many0(
         alt((map(take_while1(is_whitespace), |_| ()), comment)),
         input,
-        |acc, _| acc,
+        |acc, _| "".as_bytes(),
     )(input)
     // TODO: There's an issue with the error type in this funciton, so ? doesn't work. This is fine
     // because this function should never return an error (because of fold_many0, no matches is
@@ -271,17 +276,27 @@ mod test {
     #[test]
     fn test_space_never_fails() {
         let empty = "".as_bytes();
-        let i = "".as_bytes();
+        let input = "".as_bytes();
         assert_eq!(
-            space_or_comment::<VerboseError<&[u8]>>(i).unwrap(),
-            (empty, i)
+            space_or_comment::<VerboseError<&[u8]>>(input).unwrap(),
+            (empty, input)
         );
-        let i = "blah".as_bytes();
-        assert_eq!(space_or_comment::<VerboseError<&[u8]>>(i).unwrap(), (i, i));
-        let i = " ".as_bytes();
+        let input = "blah".as_bytes();
+        assert_eq!(space_or_comment::<VerboseError<&[u8]>>(input).unwrap(), (input, input));
+        let input = " ".as_bytes();
+        assert_eq!(
+            space_or_comment::<VerboseError<&[u8]>>(input).unwrap(),
+            (empty, empty)
+        );
+        let input = "%comment\n".as_bytes();
+        assert_eq!(
+            space_or_comment::<VerboseError<&[u8]>>(input).unwrap(),
+            (empty, empty)
+        );
+        let i = "%doublecomment\n  ".as_bytes();
         assert_eq!(
             space_or_comment::<VerboseError<&[u8]>>(i).unwrap(),
-            (empty, i)
+            (empty, empty)
         );
     }
 }
