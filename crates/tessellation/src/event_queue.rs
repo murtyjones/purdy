@@ -128,6 +128,7 @@ impl EventQueue {
             tolerance,
             prev_endpoint_id: EndpointId(std::u32::MAX),
             validator: DebugValidator::new(),
+            has_attempted_line_draw: false,
         }
     }
 
@@ -468,6 +469,8 @@ pub struct EventQueueBuilder {
     pub tolerance: f32,
     pub prev_endpoint_id: EndpointId,
     pub validator: DebugValidator,
+    // TODO: This feels so hacky.
+    has_attempted_line_draw: bool,
 }
 
 impl EventQueueBuilder {
@@ -675,6 +678,14 @@ impl EventQueueBuilder {
         //     return;
         // }
 
+        // TODO: This is hacked into place, what unintended side effects could occur?
+        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.
+        if self.nth == 0 && self.has_attempted_line_draw {
+            self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
+            self.line_segment(first + vector(1.0, 1.0), first_endpoint_id, 0.0, 1.0);
+            self.line_segment(first, first_endpoint_id, 0.0, 1.0);
+        }
+
         // Unless we are already back to the first point, we need to
         // to insert an edge.
         self.line_segment(first, first_endpoint_id, 0.0, 1.0);
@@ -684,14 +695,6 @@ impl EventQueueBuilder {
         // and have to do it now.
         if is_after(first, self.prev) && is_after(first, self.second) {
             self.vertex_event(first, first_endpoint_id);
-        }
-
-        // TODO: This is hacked into place, what unintended side effects could occur?
-        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.
-        if self.prev.x.is_nan() && self.second.x.is_nan() {
-            self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
-            self.line_segment(first + vector(1.0, 1.0), first_endpoint_id, 0.0, 1.0);
-            self.line_segment(first, first_endpoint_id, 0.0, 1.0);
         }
 
         self.validator.end();
@@ -748,6 +751,8 @@ impl EventQueueBuilder {
 
     pub fn line_segment(&mut self, to: Point, to_id: EndpointId, t0: f32, t1: f32) {
         self.validator.edge();
+
+        self.has_attempted_line_draw = true;
 
         let from = self.current;
         if from == to {

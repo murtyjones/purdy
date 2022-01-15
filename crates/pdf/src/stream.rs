@@ -54,7 +54,6 @@ impl<'a> Stream<'a> {
     pub fn get_content(&self) -> Result<Vec<StreamObject<'a>>> {
         let (rest, content) = stream_objects(self.content)?;
         if !rest.is_empty() {
-            panic!("{:?}", rest);
             return Err(ParseError::FailedToParseAllStreamContent.into());
         }
         Ok(content)
