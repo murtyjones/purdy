@@ -172,7 +172,7 @@ impl GraphicsState {
         let h = self.page_height;
         let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
         p.close();
-        // p.make_fillable_if_needed();
+        p.make_fillable_if_needed();
         let path = p.build();
         self.finished_fill_paths.push(path);
         self.to_page_description()?;

@@ -461,14 +461,14 @@ impl EventQueue {
 
 #[derive(Debug)]
 pub struct EventQueueBuilder {
-    pub current: Point,
-    pub prev: Point,
-    pub second: Point,
-    pub nth: u32,
-    pub queue: EventQueue,
-    pub tolerance: f32,
-    pub prev_endpoint_id: EndpointId,
-    pub validator: DebugValidator,
+    current: Point,
+    prev: Point,
+    second: Point,
+    nth: u32,
+    queue: EventQueue,
+    tolerance: f32,
+    prev_endpoint_id: EndpointId,
+    validator: DebugValidator,
     // TODO: This feels so hacky.
     has_attempted_line_draw: bool,
 }
@@ -679,10 +679,10 @@ impl EventQueueBuilder {
         // }
 
         // TODO: This is hacked into place, what unintended side effects could occur?
-        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.
+        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.ln!("{:?} ", self);
         if self.nth == 0 && self.has_attempted_line_draw {
             self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
-            self.line_segment(first + vector(1.0, 1.0), first_endpoint_id, 0.0, 1.0);
+            self.line_segment(first + vector(1.0, -1.0), first_endpoint_id, 0.0, 1.0);
             self.line_segment(first, first_endpoint_id, 0.0, 1.0);
         }
 
