@@ -1249,10 +1249,12 @@ dependencies = [
 name = "lyon_tessellation"
 version = "0.17.9"
 dependencies = [
+ "anyhow",
  "float_next_after",
  "lyon_extra",
  "lyon_path",
  "serde",
+ "thiserror",
 ]
 
 [[package]]

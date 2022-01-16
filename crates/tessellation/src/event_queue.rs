@@ -1,3 +1,6 @@
+use lyon_path::geom::vector;
+
+use crate::draw_state::{DrawState, Command};
 use crate::fill::{compare_positions, is_after};
 use crate::geom::{CubicBezierSegment, QuadraticBezierSegment};
 use crate::math::{point, Point};
@@ -126,6 +129,7 @@ impl EventQueue {
             tolerance,
             prev_endpoint_id: EndpointId(std::u32::MAX),
             validator: DebugValidator::new(),
+            draw_state: DrawState::default(),
         }
     }
 
@@ -466,6 +470,7 @@ pub struct EventQueueBuilder {
     tolerance: f32,
     prev_endpoint_id: EndpointId,
     validator: DebugValidator,
+    draw_state: DrawState,
 }
 
 impl EventQueueBuilder {
@@ -668,9 +673,13 @@ impl EventQueueBuilder {
     }
 
     pub fn end(&mut self, first: Point, first_endpoint_id: EndpointId) {
-        if self.nth == 0 {
-            self.validator.end();
-            return;
+        // FIXME: No reason this has to be nested other than the rust compiler not yet supporting if let chains
+        if let Some(s) = self.draw_state.as_has_given_commands().ok() {
+            if s.line_to && self.nth == 0 {
+                self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
+                self.line_segment(first + vector(1.0, -1.0), first_endpoint_id, 0.0, 1.0);
+                self.line_segment(first, first_endpoint_id, 0.0, 1.0);
+            }
         }
 
         // Unless we are already back to the first point, we need to
@@ -686,12 +695,16 @@ impl EventQueueBuilder {
 
         self.validator.end();
 
+        self.draw_state.to_inactive().expect("TODO: Use `?`");
+
         self.prev_endpoint_id = first_endpoint_id;
         self.nth = 0;
     }
 
     pub fn begin(&mut self, to: Point, to_id: EndpointId) {
         self.validator.begin();
+
+        self.draw_state.to_begun().expect("TODO: Use `?`");
 
         self.nth = 0;
         self.current = to;
@@ -739,6 +752,8 @@ impl EventQueueBuilder {
     pub fn line_segment(&mut self, to: Point, to_id: EndpointId, t0: f32, t1: f32) {
         self.validator.edge();
 
+        self.draw_state.to_has_given_commands(Command::LineTo).expect("TODO: Use `?`");
+
         let from = self.current;
         if from == to {
             return;
@@ -761,6 +776,7 @@ impl EventQueueBuilder {
 
     pub fn quadratic_bezier_segment(&mut self, ctrl: Point, to: Point, to_id: EndpointId) {
         self.validator.edge();
+        self.draw_state.to_has_given_commands(Command::QuadraticBezier).expect("TODO: Use `?`");
         // Swap the curve so that it always goes downwards. This way if two
         // paths share the same edge with different windings, the flattening will
         // play out the same way, which avoid cracks.
@@ -839,6 +855,7 @@ impl EventQueueBuilder {
         to_id: EndpointId,
     ) {
         self.validator.edge();
+        self.draw_state.to_has_given_commands(Command::CubicBezier).expect("TODO: Use `?`");
         // Swap the curve so that it always goes downwards. This way if two
         // paths share the same edge with different windings, the flattening will
         // play out the same way, which avoid cracks.

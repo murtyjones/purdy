@@ -227,11 +227,15 @@ impl Pdf {
                 // The next couple of .windows(3) calls will be `LineTo, Close/End, ???` and
                 // `Close/End, ???, ???`. We can skip these two, and we must do so in order
                 // for our point iterator to work properly and not get ahead of itself
+                let (i, from) = maybe_from.unwrap();
+                let (j, to) = points.next().unwrap();
+                if from == to {
+                    continue;
+                }
                 skip_next_n_windows += 2;
                 lineto_insertions.push(first_item_index + 2);
                 lineto_insertions.push(first_item_index + 2);
-                let (i, from) = maybe_from.unwrap();
-                let (j, to) = points.next().unwrap();
+                // If the line isn't even visible, no need to make it fillable
                 let line = LineSegment {
                     from: *from,
                     to: *to,
