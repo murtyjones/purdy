@@ -45,8 +45,8 @@ pub(crate) struct EdgeData {
 pub struct EventQueue {
     pub(crate) events: Vec<Event>,
     pub(crate) edge_data: Vec<EdgeData>,
-    pub first: TessEventId,
-    pub sorted: bool,
+    first: TessEventId,
+    sorted: bool,
 }
 
 impl Default for EventQueue {
@@ -673,15 +673,8 @@ impl EventQueueBuilder {
     }
 
     pub fn end(&mut self, first: Point, first_endpoint_id: EndpointId) {
-        // if self.nth == 0 {
-        //     self.validator.end();
-        //     return;
-        // }
-
-        
-
+        // FIXME: No reason this has to be nested other than the rust compiler not yet supporting if let chains
         if let Some(s) = self.draw_state.as_has_given_commands().ok() {
-            // FIXME: No reason this has to be nested other than the rust compiler not yet supporting if let chains
             if s.line_to && self.nth == 0 {
                 self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
                 self.line_segment(first + vector(1.0, -1.0), first_endpoint_id, 0.0, 1.0);
