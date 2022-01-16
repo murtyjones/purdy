@@ -1,10 +1,37 @@
 use anyhow::{Result, Ok};
 use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct DrawState(State);
 
+impl Default for DrawState {
+    fn default() -> Self {
+        DrawState(State::default())
+    }
+}
+
 impl DrawState {
+    fn as_inactive(&self) -> Result<()> {
+        match &self.0 {
+            State::Inactive => Ok(()),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Inactive").into())
+        }
+    }
+
+    fn as_begun(&self) -> Result<()> {
+        match &self.0 {
+            State::Begun => Ok(()),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Begun").into())
+        }
+    }
+
+    fn as_has_given_commands(&self) -> Result<&Commands> {
+        match &self.0 {
+            State::HasGivenCommands(data) => Ok(data),
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("HasGivenCommands").into())
+        }
+    }
+
     fn to_inactive(&mut self) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => {
@@ -76,7 +103,7 @@ impl DrawState {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 struct Commands {
     line_to: bool,
     cubic_bezier: bool,
@@ -99,7 +126,7 @@ enum Command {
     QuadraticBezier,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum State {
     Inactive,
     Begun,
@@ -118,4 +145,42 @@ pub(crate) enum GraphicsStateError {
     InvalidStateTransition(&'static str, &'static str),
     #[error("invalid attempt to access {0} state while not in {0} mode")]
     InvalidAttemptToAccessState(&'static str),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DrawState, Command, Commands};
+
+    #[test]
+    fn test_draw_state_transitions() {
+        let mut state = DrawState::default();
+        assert!(state.as_inactive().is_ok());
+        assert!(state.as_begun().is_err());
+        assert!(state.as_has_given_commands().is_err());
+        assert!(state.to_inactive().is_ok());
+        assert!(state.to_has_given_commands(Command::LineTo).is_err());
+        assert!(state.to_begun().is_ok());
+        assert!(state.as_begun().is_ok());
+        assert!(state.as_inactive().is_err());
+        assert!(state.as_has_given_commands().is_err());
+        assert!(state.to_has_given_commands(Command::LineTo).is_ok());
+        assert!(state.as_inactive().is_err());
+        assert!(state.as_begun().is_err());
+        assert!(state.as_has_given_commands().is_ok());
+        let given_commands = state.as_has_given_commands().unwrap();
+        assert_eq!(*given_commands, Commands {
+            line_to: true,
+            ..Commands::default()
+        });
+        assert!(state.to_has_given_commands(Command::QuadraticBezier).is_ok());
+        assert!(state.as_has_given_commands().is_ok());
+        let given_commands = state.as_has_given_commands().unwrap();
+        assert_eq!(*given_commands, Commands {
+            line_to: true,
+            quadratic_bezier: true,
+            ..Commands::default()
+        });
+        assert!(state.to_begun().is_err());
+        assert!(state.to_inactive().is_ok());
+    }
 }
