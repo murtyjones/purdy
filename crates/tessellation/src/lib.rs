@@ -189,6 +189,7 @@ use lyon_extra as extra;
 #[macro_use]
 pub extern crate serde;
 
+mod basic_shapes;
 mod event_queue;
 mod fill;
 pub mod geometry_builder;
@@ -225,7 +226,7 @@ pub use crate::geometry_builder::{
     GeometryBuilderError, StrokeGeometryBuilder, StrokeVertexConstructor, VertexBuffers,
 };
 
-pub use crate::path::{FillRule, LineJoin, LineCap, Side, Attributes, AttributeIndex};
+pub use crate::path::{AttributeIndex, Attributes, FillRule, LineCap, LineJoin, Side};
 
 use crate::path::EndpointId;
 
@@ -321,7 +322,7 @@ impl std::fmt::Display for InternalError {
             InternalError::InvalidNumberOfEdgesBelowVertex => {
                 write!(f, "Unexpected number of edges below a vertex")
             }
-            InternalError::ErrorCode(code)  => {
+            InternalError::ErrorCode(code) => {
                 write!(f, "Error code #{}", code)
             }
         }
@@ -721,7 +722,9 @@ impl path::AttributeStore for SimpleAttributeStore {
         Attributes(&self.data[start..end])
     }
 
-    fn num_attributes(&self) -> usize { self.num_attributes }
+    fn num_attributes(&self) -> usize {
+        self.num_attributes
+    }
 }
 
 impl Default for SimpleAttributeStore {
@@ -757,7 +760,6 @@ impl SimpleAttributeStore {
         self.num_attributes = num_attributes;
     }
 }
-
 
 #[test]
 fn test_without_miter_limit() {
