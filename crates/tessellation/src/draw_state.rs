@@ -1,4 +1,4 @@
-use anyhow::{Result, Ok};
+use anyhow::{Ok, Result};
 use thiserror::Error;
 
 #[derive(Debug, Copy, Clone)]
@@ -14,29 +14,27 @@ impl DrawState {
     fn as_inactive(&self) -> Result<()> {
         match &self.0 {
             State::Inactive => Ok(()),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Inactive").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Inactive").into()),
         }
     }
 
     fn as_begun(&self) -> Result<()> {
         match &self.0 {
             State::Begun => Ok(()),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Begun").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Begun").into()),
         }
     }
 
     fn as_has_given_commands(&self) -> Result<&Commands> {
         match &self.0 {
             State::HasGivenCommands(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("HasGivenCommands").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("HasGivenCommands").into()),
         }
     }
 
     fn to_inactive(&mut self) -> Result<()> {
         let result = match &self.0 {
-            State::Inactive => {
-                Ok(())
-            }
+            State::Inactive => Ok(()),
             State::Begun => {
                 self.0 = State::Inactive;
                 Ok(())
@@ -56,9 +54,7 @@ impl DrawState {
                 self.0 = State::Begun;
                 Ok(())
             }
-            State::Begun => {
-                Ok(())
-            }
+            State::Begun => Ok(()),
             State::HasGivenCommands(data) => {
                 Err(GraphicsStateError::InvalidStateTransition("HasGivenCommands", "Begun").into())
             }
@@ -69,15 +65,20 @@ impl DrawState {
 
     fn to_has_given_commands(&mut self, command: Command) -> Result<()> {
         let result = match &self.0 {
-            State::Inactive => {
-                Err(GraphicsStateError::InvalidStateTransition("Inactive", "HasGivenCommands").into())
-            }
+            State::Inactive => Err(GraphicsStateError::InvalidStateTransition(
+                "Inactive",
+                "HasGivenCommands",
+            )
+            .into()),
             State::Begun => {
                 self.0 = State::HasGivenCommands(DrawState::generate_command_state(command, None));
                 Ok(())
             }
             State::HasGivenCommands(data) => {
-                self.0 = State::HasGivenCommands(DrawState::generate_command_state(command, Some(*data)));
+                self.0 = State::HasGivenCommands(DrawState::generate_command_state(
+                    command,
+                    Some(*data),
+                ));
                 Ok(())
             }
         }?;
@@ -85,7 +86,10 @@ impl DrawState {
         Ok(result)
     }
 
-    fn generate_command_state(new_command: Command, current_commands: Option<Commands>) -> Commands {
+    fn generate_command_state(
+        new_command: Command,
+        current_commands: Option<Commands>,
+    ) -> Commands {
         let mut commands = current_commands.unwrap_or(Commands::default());
         match new_command {
             Command::LineTo => {
@@ -102,7 +106,6 @@ impl DrawState {
     }
 }
 
-
 #[derive(Debug, Copy, Clone, PartialEq)]
 struct Commands {
     line_to: bool,
@@ -111,13 +114,13 @@ struct Commands {
 }
 
 impl Default for Commands {
-    fn default() -> Self { 
+    fn default() -> Self {
         Commands {
             line_to: false,
             cubic_bezier: false,
             quadratic_bezier: false,
         }
-     }
+    }
 }
 
 enum Command {
@@ -134,9 +137,9 @@ enum State {
 }
 
 impl Default for State {
-    fn default() -> Self { 
+    fn default() -> Self {
         State::Inactive
-     }
+    }
 }
 
 #[derive(Error, Debug)]
@@ -149,7 +152,7 @@ pub(crate) enum GraphicsStateError {
 
 #[cfg(test)]
 mod tests {
-    use super::{DrawState, Command, Commands};
+    use super::{Command, Commands, DrawState};
 
     #[test]
     fn test_draw_state_transitions() {
@@ -168,18 +171,26 @@ mod tests {
         assert!(state.as_begun().is_err());
         assert!(state.as_has_given_commands().is_ok());
         let given_commands = state.as_has_given_commands().unwrap();
-        assert_eq!(*given_commands, Commands {
-            line_to: true,
-            ..Commands::default()
-        });
-        assert!(state.to_has_given_commands(Command::QuadraticBezier).is_ok());
+        assert_eq!(
+            *given_commands,
+            Commands {
+                line_to: true,
+                ..Commands::default()
+            }
+        );
+        assert!(state
+            .to_has_given_commands(Command::QuadraticBezier)
+            .is_ok());
         assert!(state.as_has_given_commands().is_ok());
         let given_commands = state.as_has_given_commands().unwrap();
-        assert_eq!(*given_commands, Commands {
-            line_to: true,
-            quadratic_bezier: true,
-            ..Commands::default()
-        });
+        assert_eq!(
+            *given_commands,
+            Commands {
+                line_to: true,
+                quadratic_bezier: true,
+                ..Commands::default()
+            }
+        );
         assert!(state.to_begun().is_err());
         assert!(state.to_inactive().is_ok());
     }
