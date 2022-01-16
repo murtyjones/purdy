@@ -11,28 +11,28 @@ impl Default for DrawState {
 }
 
 impl DrawState {
-    fn as_inactive(&self) -> Result<()> {
+    pub fn as_inactive(&self) -> Result<()> {
         match &self.0 {
             State::Inactive => Ok(()),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Inactive").into()),
         }
     }
 
-    fn as_begun(&self) -> Result<()> {
+    pub fn as_begun(&self) -> Result<()> {
         match &self.0 {
             State::Begun => Ok(()),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Begun").into()),
         }
     }
 
-    fn as_has_given_commands(&self) -> Result<&Commands> {
+    pub fn as_has_given_commands(&self) -> Result<&Commands> {
         match &self.0 {
             State::HasGivenCommands(data) => Ok(data),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("HasGivenCommands").into()),
         }
     }
 
-    fn to_inactive(&mut self) -> Result<()> {
+    pub fn to_inactive(&mut self) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => Ok(()),
             State::Begun => {
@@ -48,7 +48,7 @@ impl DrawState {
         Ok(result)
     }
 
-    fn to_begun(&mut self) -> Result<()> {
+    pub fn to_begun(&mut self) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => {
                 self.0 = State::Begun;
@@ -63,7 +63,7 @@ impl DrawState {
         Ok(result)
     }
 
-    fn to_has_given_commands(&mut self, command: Command) -> Result<()> {
+    pub fn to_has_given_commands(&mut self, command: Command) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => Err(GraphicsStateError::InvalidStateTransition(
                 "Inactive",
@@ -107,10 +107,10 @@ impl DrawState {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-struct Commands {
-    line_to: bool,
-    cubic_bezier: bool,
-    quadratic_bezier: bool,
+pub struct Commands {
+    pub(crate) line_to: bool,
+    pub(crate) cubic_bezier: bool,
+    pub(crate) quadratic_bezier: bool,
 }
 
 impl Default for Commands {
@@ -123,7 +123,7 @@ impl Default for Commands {
     }
 }
 
-enum Command {
+pub enum Command {
     LineTo,
     CubicBezier,
     QuadraticBezier,
