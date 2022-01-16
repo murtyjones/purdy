@@ -680,12 +680,13 @@ impl EventQueueBuilder {
 
         
 
-        // TODO: This is hacked into place, what unintended side effects could occur?
-        // this doesn't account for whether or not a line was actually drawn. so `10 10 m f` would trigger this condition.ln!("{:?} ", self);
-        if self.nth == 0 && self.draw_state.as_has_given_commands().expect("TODO: Use `?`").line_to {
-            self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
-            self.line_segment(first + vector(1.0, -1.0), first_endpoint_id, 0.0, 1.0);
-            self.line_segment(first, first_endpoint_id, 0.0, 1.0);
+        if let Some(s) = self.draw_state.as_has_given_commands().ok() {
+            // FIXME: No reason this has to be nested other than the rust compiler not yet supporting if let chains
+            if s.line_to && self.nth == 0 {
+                self.line_segment(first + vector(1.0, 0.0), first_endpoint_id, 0.0, 1.0);
+                self.line_segment(first + vector(1.0, -1.0), first_endpoint_id, 0.0, 1.0);
+                self.line_segment(first, first_endpoint_id, 0.0, 1.0);
+            }
         }
 
         // Unless we are already back to the first point, we need to
