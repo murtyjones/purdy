@@ -1,6 +1,6 @@
-use std::ops::{Sub, Div};
+use std::ops::{Div, Sub};
 
-use derive_more::{Add, Display, From, Into, Mul, Deref, Neg};
+use derive_more::{Add, Deref, Display, From, Into, Mul, Neg};
 
 #[derive(Debug, Copy, Clone, Add, Display, From, Into, PartialEq, Mul, Deref, Neg)]
 pub struct Width(f32);

@@ -1,9 +1,9 @@
+use crate::error::ParseError;
 use crate::{dictionary::Dictionary, utils::strip_nom, ObjectId};
 use anyhow::Result;
 use lyon_geom::Vector;
 use lyon_path::LineCap;
-use shared::{Width, Height, LineWidth, Rgb, ColorSpace};
-use crate::error::ParseError;
+use shared::{ColorSpace, Height, LineWidth, Rgb, Width};
 
 use self::parsers::stream_objects;
 

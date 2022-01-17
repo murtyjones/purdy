@@ -1,5 +1,5 @@
 use crate::scalar::{Float, Scalar};
-use crate::{vector, Point, Vector, point};
+use crate::{point, vector, Point, Vector};
 use arrayvec::ArrayVec;
 
 #[inline]
@@ -183,7 +183,6 @@ fn cubic_polynomial() {
     // Constant.
     assert_approx_eq(cubic_polynomial_roots(0.0, 0.0, 0.0, 0.0), &[], 0.00005);
 }
-
 
 #[test]
 fn test_pythagorean() {

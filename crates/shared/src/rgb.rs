@@ -36,7 +36,7 @@ impl Rgb {
     pub fn blue(&self) -> f32 {
         self.blue
     }
-    
+
     pub fn green(&self) -> f32 {
         self.green
     }

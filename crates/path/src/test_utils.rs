@@ -1,7 +1,10 @@
-use approx::{AbsDiffEq, assert_relative_eq, RelativeEq};
+use approx::{assert_relative_eq, AbsDiffEq, RelativeEq};
 use lyon_geom::euclid::{Point2D, UnknownUnit};
 
-pub fn assert_relative_eq_boxed_pt_slice(left: Box<[Point2D<f32, UnknownUnit>]>, right: Box<[Point2D<f32, UnknownUnit>]>) {
+pub fn assert_relative_eq_boxed_pt_slice(
+    left: Box<[Point2D<f32, UnknownUnit>]>,
+    right: Box<[Point2D<f32, UnknownUnit>]>,
+) {
     assert_relative_eq!(
         AssertableBoxedPointSlice(left),
         AssertableBoxedPointSlice(right),

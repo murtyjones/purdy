@@ -190,13 +190,13 @@ use lyon_extra as extra;
 pub extern crate serde;
 
 mod basic_shapes;
+mod draw_state;
 mod event_queue;
 mod fill;
 pub mod geometry_builder;
 mod math_utils;
 mod monotone;
 mod stroke;
-mod draw_state;
 
 #[cfg(test)]
 #[rustfmt::skip]

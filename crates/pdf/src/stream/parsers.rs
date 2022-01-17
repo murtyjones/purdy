@@ -10,7 +10,7 @@ use nom::{
     combinator::{map, map_opt, map_res, opt},
     error::{ErrorKind, ParseError},
     multi::{many0, many1},
-    sequence::{delimited, pair, terminated, tuple, preceded},
+    sequence::{delimited, pair, preceded, terminated, tuple},
 };
 use num::ToPrimitive;
 use shared::{ColorSpace, Height, LineWidth, NumberError, Rgb, Width};
@@ -263,10 +263,7 @@ fn set_non_stroke_color_space(input: &[u8]) -> NomResult<ColorSpace> {
 
 fn inner_set_non_stroke_color_space(input: &[u8]) -> NomResult<ColorSpace> {
     map(
-        preceded(char('/'), terminated(
-            color_space,
-            ws(tag("cs")),
-        )),
+        preceded(char('/'), terminated(color_space, ws(tag("cs")))),
         |s| {
             let s = std::str::from_utf8(s).unwrap();
             ColorSpace::from_str(s).unwrap()
@@ -284,10 +281,7 @@ fn set_stroke_color_space(input: &[u8]) -> NomResult<ColorSpace> {
 
 fn inner_set_stroke_color_space(input: &[u8]) -> NomResult<ColorSpace> {
     map(
-        preceded(char('/'), terminated(
-            color_space,
-            ws(tag("CS")),
-        )),
+        preceded(char('/'), terminated(color_space, ws(tag("CS")))),
         |s| {
             let s = std::str::from_utf8(s).unwrap();
             ColorSpace::from_str(s).unwrap()
@@ -297,8 +291,18 @@ fn inner_set_stroke_color_space(input: &[u8]) -> NomResult<ColorSpace> {
 
 #[test]
 fn test_color_space() {
-    assert_eq!(set_stroke_color_space("/DeviceRGB CS".as_bytes()).unwrap().1, ColorSpace::DeviceRGB);
-    assert_eq!(set_stroke_color_space("  /DeviceGray   CS".as_bytes()).unwrap().1, ColorSpace::DeviceGray);
+    assert_eq!(
+        set_stroke_color_space("/DeviceRGB CS".as_bytes())
+            .unwrap()
+            .1,
+        ColorSpace::DeviceRGB
+    );
+    assert_eq!(
+        set_stroke_color_space("  /DeviceGray   CS".as_bytes())
+            .unwrap()
+            .1,
+        ColorSpace::DeviceGray
+    );
 }
 
 fn color_space(input: &[u8]) -> NomResult<&[u8]> {
@@ -320,7 +324,10 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(set_non_stroke, StreamObject::SetNonStrokeColor),
         map(set_stroke_color, StreamObject::SetStrokeColor),
         map(set_stroke_color_space, StreamObject::SetStrokeColorSpace),
-        map(set_non_stroke_color_space, StreamObject::SetNonStrokeColorSpace),
+        map(
+            set_non_stroke_color_space,
+            StreamObject::SetNonStrokeColorSpace,
+        ),
     )))(input)
 }
 

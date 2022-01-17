@@ -15,7 +15,7 @@ impl Cmyk {
         let m = Cmyk::clamp(m);
         let y = Cmyk::clamp(y);
         let k = Cmyk::clamp(k);
-        Cmyk(c,m,y,k)
+        Cmyk(c, m, y, k)
     }
 
     pub fn set(&mut self, c: Cmyk) {

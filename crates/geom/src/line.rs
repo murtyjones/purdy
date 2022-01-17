@@ -2,8 +2,8 @@ use crate::monotonic::MonotonicSegment;
 use crate::scalar::Scalar;
 use crate::segment::{BoundingBox, Segment};
 use crate::traits::Transformation;
-use crate::utils::{min_max, get_pythagorean_hypotenuse};
-use crate::{point, vector, Point, Vector, Box2D, Transform, Translation, Rotation};
+use crate::utils::{get_pythagorean_hypotenuse, min_max};
+use crate::{point, vector, Box2D, Point, Rotation, Transform, Translation, Vector};
 use std::mem::swap;
 
 use std::ops::Range;
@@ -451,10 +451,11 @@ impl<S: Scalar> LineSegment<S> {
         let p2 = point(fill_width / S::TWO, hypotenuse / S::TWO);
         let p3 = point(fill_width / S::TWO, -hypotenuse / S::TWO);
         let p4 = point(-fill_width / S::TWO, -hypotenuse / S::TWO);
-        
+
         let x_mid = (self.from.x + self.to.x) / S::TWO;
         let y_mid = (self.from.y + self.to.y) / S::TWO;
-        let degrees = S::atan2(self.to.y - self.from.y, self.to.x - self.from.x).to_degrees() - S::NINETY;
+        let degrees =
+            S::atan2(self.to.y - self.from.y, self.to.x - self.from.x).to_degrees() - S::NINETY;
         let rotation = Rotation::new(Angle::degrees(degrees));
         let p1 = rotation.transform_point(p1);
         let p2 = rotation.transform_point(p2);
@@ -819,9 +820,9 @@ fn intersection_overlap() {
     assert!(l1.intersection(&l2).is_none());
 }
 
-use euclid::Angle;
 #[cfg(test)]
 use euclid::approxeq::ApproxEq;
+use euclid::Angle;
 
 #[test]
 fn bounding_box() {

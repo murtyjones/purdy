@@ -1,6 +1,6 @@
 use lyon_path::geom::vector;
 
-use crate::draw_state::{DrawState, Command};
+use crate::draw_state::{Command, DrawState};
 use crate::fill::{compare_positions, is_after};
 use crate::geom::{CubicBezierSegment, QuadraticBezierSegment};
 use crate::math::{point, Point};
@@ -752,7 +752,9 @@ impl EventQueueBuilder {
     pub fn line_segment(&mut self, to: Point, to_id: EndpointId, t0: f32, t1: f32) {
         self.validator.edge();
 
-        self.draw_state.to_has_given_commands(Command::LineTo).expect("TODO: Use `?`");
+        self.draw_state
+            .to_has_given_commands(Command::LineTo)
+            .expect("TODO: Use `?`");
 
         let from = self.current;
         if from == to {
@@ -776,7 +778,9 @@ impl EventQueueBuilder {
 
     pub fn quadratic_bezier_segment(&mut self, ctrl: Point, to: Point, to_id: EndpointId) {
         self.validator.edge();
-        self.draw_state.to_has_given_commands(Command::QuadraticBezier).expect("TODO: Use `?`");
+        self.draw_state
+            .to_has_given_commands(Command::QuadraticBezier)
+            .expect("TODO: Use `?`");
         // Swap the curve so that it always goes downwards. This way if two
         // paths share the same edge with different windings, the flattening will
         // play out the same way, which avoid cracks.
@@ -855,7 +859,9 @@ impl EventQueueBuilder {
         to_id: EndpointId,
     ) {
         self.validator.edge();
-        self.draw_state.to_has_given_commands(Command::CubicBezier).expect("TODO: Use `?`");
+        self.draw_state
+            .to_has_given_commands(Command::CubicBezier)
+            .expect("TODO: Use `?`");
         // Swap the curve so that it always goes downwards. This way if two
         // paths share the same edge with different windings, the flattening will
         // play out the same way, which avoid cracks.

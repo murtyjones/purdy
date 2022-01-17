@@ -1,8 +1,8 @@
-use anyhow::{Result, Error};
-use thiserror::Error;
+use anyhow::{Error, Result};
 use std::str::FromStr;
+use thiserror::Error;
 
-use crate::{Rgb, Gray, Cmyk};
+use crate::{Cmyk, Gray, Rgb};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ColorSpace {
@@ -29,10 +29,10 @@ impl FromStr for ColorSpace {
 
     fn from_str(input: &str) -> Result<ColorSpace, Self::Err> {
         match input {
-            "DeviceRGB"  => Ok(ColorSpace::DeviceRGB),
-            "DeviceGray"  => Ok(ColorSpace::DeviceGray),
-            "DeviceCMYK"  => Ok(ColorSpace::DeviceCMYK),
-            s      => Err(ColorSpaceError::UnrecognizedColorSpace(s.to_owned()).into()),
+            "DeviceRGB" => Ok(ColorSpace::DeviceRGB),
+            "DeviceGray" => Ok(ColorSpace::DeviceGray),
+            "DeviceCMYK" => Ok(ColorSpace::DeviceCMYK),
+            s => Err(ColorSpaceError::UnrecognizedColorSpace(s.to_owned()).into()),
         }
     }
 }

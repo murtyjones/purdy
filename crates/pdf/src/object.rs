@@ -1,8 +1,8 @@
 use anyhow::Result;
+use num::ToPrimitive;
 use shared::NumberError;
 use std::{fmt, str};
 use strum_macros::Display;
-use num::ToPrimitive;
 
 use linked_hash_map::LinkedHashMap;
 
@@ -68,7 +68,9 @@ impl<'a> Object<'a> {
     /// Unlike as_f64() this will also cast an Integer to a Real.
     pub fn as_float(&self) -> Result<f64> {
         match *self {
-            Object::Integer(ref value) => value.to_f64().ok_or(NumberError::InvalidNumberConversion.into()),
+            Object::Integer(ref value) => value
+                .to_f64()
+                .ok_or(NumberError::InvalidNumberConversion.into()),
             Object::Real(ref value) => Ok(*value),
             _ => Err(HandlingError::ObjectCast.into()),
         }

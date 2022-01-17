@@ -5,7 +5,7 @@ use crate::{
     stream::{Stream, TextContent},
     utils::{_name, _real, hex_char2, int1, take_until_unmatched, ws},
     xref::{Xref, XrefEntry},
-    ObjectId, ObjectNumber, NomResult,
+    NomResult, ObjectId, ObjectNumber,
 };
 use anyhow::Result;
 use std::{collections::BTreeMap, str::from_utf8};

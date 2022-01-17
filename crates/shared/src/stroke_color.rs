@@ -1,7 +1,7 @@
 use anyhow::Result;
 
-use crate::color::{ColorSpace, Color, ColorError};
-use crate::{Rgb, Cmyk, Gray, ColorSpaceWithColor};
+use crate::color::{Color, ColorError, ColorSpace};
+use crate::{Cmyk, ColorSpaceWithColor, Gray, Rgb};
 
 #[derive(Debug, Clone, Copy)]
 pub struct StrokeColor {
@@ -13,7 +13,7 @@ pub struct StrokeColor {
 
 impl Default for StrokeColor {
     fn default() -> Self {
-        StrokeColor { 
+        StrokeColor {
             // TODO: Confirm these values with the PDF spec
             color_space: ColorSpace::DeviceGray,
             rgb: Rgb::new(0.0, 0.0, 0.0),
@@ -38,7 +38,7 @@ impl Color for StrokeColor {
                     ColorSpace::DeviceGray => unimplemented!(),
                     ColorSpace::DeviceRGB => unimplemented!(),
                 }
-            },
+            }
             3 => {
                 // see how PDF spec handles it
                 match self.color_space {
@@ -46,12 +46,12 @@ impl Color for StrokeColor {
                     ColorSpace::DeviceGray => unimplemented!(),
                     ColorSpace::DeviceRGB => {
                         use std::convert::TryInto;
-                        let [r,g,b]: [f32; 3] = c.try_into().unwrap();
+                        let [r, g, b]: [f32; 3] = c.try_into().unwrap();
                         self.rgb = Rgb::new(r, g, b);
                         Ok(())
-                    },
+                    }
                 }
-            },
+            }
             4 => {
                 // see how PDF spec handles it
                 match self.color_space {
@@ -59,22 +59,16 @@ impl Color for StrokeColor {
                     ColorSpace::DeviceGray => unimplemented!(),
                     ColorSpace::DeviceRGB => unimplemented!(),
                 }
-            },
+            }
             other => Err(ColorError::TooManyParams(other).into()),
         }
     }
 
     fn get_current_color(&self) -> ColorSpaceWithColor {
         match self.color_space {
-            ColorSpace::DeviceCMYK => {
-                ColorSpaceWithColor::DeviceCMYK(self.cmyk)
-            }
-            ColorSpace::DeviceRGB => {
-                ColorSpaceWithColor::DeviceRGB(self.rgb)
-            }
-            ColorSpace::DeviceGray => {
-                ColorSpaceWithColor::DeviceGray(self.gray)
-            }
+            ColorSpace::DeviceCMYK => ColorSpaceWithColor::DeviceCMYK(self.cmyk),
+            ColorSpace::DeviceRGB => ColorSpaceWithColor::DeviceRGB(self.rgb),
+            ColorSpace::DeviceGray => ColorSpaceWithColor::DeviceGray(self.gray),
         }
     }
 }

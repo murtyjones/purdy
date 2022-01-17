@@ -53,8 +53,8 @@ mod events;
 pub mod iterator;
 pub mod path;
 pub mod path_buffer;
-pub mod polygon;
 pub mod pdf;
+pub mod polygon;
 #[cfg(test)]
 mod test_utils;
 

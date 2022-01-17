@@ -1,4 +1,4 @@
-use derive_more::{Add, Display, From, Into, Mul, Div, Deref, Neg};
+use derive_more::{Add, Deref, Display, Div, From, Into, Mul, Neg};
 
 #[derive(Debug, Copy, Clone, Add, Display, From, Into, PartialEq, Mul, Div, Deref, Neg)]
 pub struct LineWidth(f32);

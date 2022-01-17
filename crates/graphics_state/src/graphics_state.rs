@@ -1,9 +1,9 @@
-use anyhow::{Result, Ok};
-use lyon_path::{math::Vector, LineCap};
-use thiserror::Error;
-use lyon_path::pdf::Pdf;
+use anyhow::{Ok, Result};
 use lyon_path::builder::Build;
-use shared::{Width, Height, LineWidth, Rgb, StrokeColor, NonStrokeColor, Color, ColorSpace};
+use lyon_path::pdf::Pdf;
+use lyon_path::{math::Vector, LineCap};
+use shared::{Color, ColorSpace, Height, LineWidth, NonStrokeColor, Rgb, StrokeColor, Width};
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum GraphicsStateError {
@@ -22,11 +22,10 @@ enum State {
 }
 
 impl Default for State {
-    fn default() -> Self { 
+    fn default() -> Self {
         State::PageDescription(PageDescription::default())
-     }
+    }
 }
-
 
 #[derive(Debug)]
 pub struct GraphicsState {
@@ -36,7 +35,7 @@ pub struct GraphicsState {
     page_width: Width,
     page_height: Height,
     // ... Shared Values
-    state: State
+    state: State,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -83,32 +82,32 @@ impl Default for Text {
 #[derive(Debug)]
 struct Path {
     // ... Specific State Values
-    builder: Pdf
+    builder: Pdf,
 }
 
 impl Path {
     fn new(page_width: Width, page_height: Height) -> Self {
         Path {
-            builder: Pdf::new(page_width, page_height)
+            builder: Pdf::new(page_width, page_height),
         }
     }
 
     fn move_to(&mut self, to: Vector) {
         self.builder.move_to(to);
     }
-    
+
     fn line_to(&mut self, to: Vector) {
         self.builder.line_to(to);
     }
-    
+
     fn rect(&mut self, low_left: Vector, width: Width, height: Height) {
         self.builder.rect(low_left, width, height);
     }
-    
+
     fn close(&mut self) {
         self.builder.close();
     }
-    
+
     fn build(self) -> lyon_path::Path {
         self.builder.build()
     }
@@ -140,7 +139,7 @@ impl GraphicsState {
             page_width,
             page_height,
             // ...
-            state: State::default()
+            state: State::default(),
         }
     }
 
@@ -228,36 +227,34 @@ impl GraphicsState {
     fn as_path_mut(&mut self) -> Result<&mut Path> {
         match &mut self.state {
             State::Path(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into()),
         }
     }
 
     fn as_page_description_mut(&mut self) -> Result<&mut PageDescription> {
         match &mut self.state {
             State::PageDescription(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into()),
         }
     }
 
     fn as_path(&self) -> Result<&Path> {
         match &self.state {
             State::Path(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Path").into()),
         }
     }
 
     fn as_page_description(&self) -> Result<&PageDescription> {
         match &self.state {
             State::PageDescription(data) => Ok(data),
-            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into())
+            _ => Err(GraphicsStateError::InvalidAttemptToAccessState("PageDescription").into()),
         }
     }
 
     fn to_page_description(&mut self) -> Result<()> {
         let result = match &self.state {
-            State::PageDescription(_) => {
-                Ok(())
-            }
+            State::PageDescription(_) => Ok(()),
             State::Text(data) => {
                 self.state = State::PageDescription(convert_text_to_page_description(data));
                 Ok(())
@@ -267,7 +264,8 @@ impl GraphicsState {
                 Ok(())
             }
             State::ClippingPath(data) => {
-                self.state = State::PageDescription(convert_clipping_path_to_page_description(data));
+                self.state =
+                    State::PageDescription(convert_clipping_path_to_page_description(data));
                 Ok(())
             }
         }?;
@@ -281,9 +279,7 @@ impl GraphicsState {
                 self.state = State::Text(convert_page_description_to_text(&data));
                 Ok(())
             }
-            State::Text(_) => {
-                Ok(())
-            }
+            State::Text(_) => Ok(()),
             State::Path(_) => {
                 Err(GraphicsStateError::InvalidStateTransition("Path", "Text").into())
             }
@@ -298,15 +294,17 @@ impl GraphicsState {
     fn to_path(&mut self) -> Result<()> {
         let result = match &self.state {
             State::PageDescription(data) => {
-                self.state = State::Path(convert_page_description_to_path(self.page_width, self.page_height, data));
+                self.state = State::Path(convert_page_description_to_path(
+                    self.page_width,
+                    self.page_height,
+                    data,
+                ));
                 Ok(())
             }
             State::Text(_) => {
                 Err(GraphicsStateError::InvalidStateTransition("Text", "Path").into())
             }
-            State::Path(_) => {
-                Ok(())
-            }
+            State::Path(_) => Ok(()),
             State::ClippingPath(_) => {
                 Err(GraphicsStateError::InvalidStateTransition("ClippingPath", "Path").into())
             }
@@ -317,9 +315,11 @@ impl GraphicsState {
 
     fn to_clipping_path(&mut self) -> Result<()> {
         let result = match &self.state {
-            State::PageDescription(_) => {
-                Err(GraphicsStateError::InvalidStateTransition("PageDescription", "ClippingPath").into())
-            }
+            State::PageDescription(_) => Err(GraphicsStateError::InvalidStateTransition(
+                "PageDescription",
+                "ClippingPath",
+            )
+            .into()),
             State::Text(_) => {
                 Err(GraphicsStateError::InvalidStateTransition("ClippingPath", "Text").into())
             }
@@ -327,9 +327,7 @@ impl GraphicsState {
                 self.state = State::ClippingPath(convert_path_to_clipping_path(&data));
                 Ok(())
             }
-            State::ClippingPath(_) => {
-                Ok(())
-            }
+            State::ClippingPath(_) => Ok(()),
         }?;
         assert!(matches!(self.state, State::ClippingPath(_)));
         Ok(result)
@@ -356,7 +354,11 @@ fn convert_path_to_text(data: &Path) -> Text {
     Text::default()
 }
 
-fn convert_page_description_to_path(page_width: Width, page_height: Height, data: &PageDescription) -> Path {
+fn convert_page_description_to_path(
+    page_width: Width,
+    page_height: Height,
+    data: &PageDescription,
+) -> Path {
     Path::new(page_width, page_height)
 }
 

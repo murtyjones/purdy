@@ -31,4 +31,3 @@ pub enum ParseError {
     #[error("Found leftover content in stream")]
     FailedToParseAllStreamContent,
 }
-

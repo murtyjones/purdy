@@ -2,7 +2,7 @@ use std::str::from_utf8;
 use std::{fs::File, path::PathBuf};
 use std::{io::Read, str::FromStr};
 
-use crate::{object::Name, ObjectId, NomResult};
+use crate::{object::Name, NomResult, ObjectId};
 use anyhow::Result;
 use nom::bitvec::view::AsBits;
 use nom::bytes::complete::take_while1;
@@ -282,7 +282,10 @@ mod test {
             (empty, input)
         );
         let input = "blah".as_bytes();
-        assert_eq!(space_or_comment::<VerboseError<&[u8]>>(input).unwrap(), (input, input));
+        assert_eq!(
+            space_or_comment::<VerboseError<&[u8]>>(input).unwrap(),
+            (input, input)
+        );
         let input = " ".as_bytes();
         assert_eq!(
             space_or_comment::<VerboseError<&[u8]>>(input).unwrap(),
