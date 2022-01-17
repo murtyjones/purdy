@@ -18,14 +18,14 @@ impl DrawState {
         }
     }
 
-    pub fn as_begun(&self) -> Result<()> {
+    pub fn as_active(&self) -> Result<()> {
         match &self.0 {
             State::Begun => Ok(()),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("Begun").into()),
         }
     }
 
-    pub fn as_has_given_commands(&self) -> Result<&Commands> {
+    pub fn as_commands(&self) -> Result<&Commands> {
         match &self.0 {
             State::HasGivenCommands(data) => Ok(data),
             _ => Err(GraphicsStateError::InvalidAttemptToAccessState("HasGivenCommands").into()),
@@ -48,7 +48,7 @@ impl DrawState {
         Ok(result)
     }
 
-    pub fn to_begun(&mut self) -> Result<()> {
+    pub fn to_active(&mut self) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => {
                 self.0 = State::Begun;
@@ -63,7 +63,7 @@ impl DrawState {
         Ok(result)
     }
 
-    pub fn to_has_given_commands(&mut self, command: Command) -> Result<()> {
+    pub fn to_commands(&mut self, command: Command) -> Result<()> {
         let result = match &self.0 {
             State::Inactive => Err(GraphicsStateError::InvalidStateTransition(
                 "Inactive",
@@ -158,19 +158,19 @@ mod tests {
     fn test_draw_state_transitions() {
         let mut state = DrawState::default();
         assert!(state.as_inactive().is_ok());
-        assert!(state.as_begun().is_err());
-        assert!(state.as_has_given_commands().is_err());
+        assert!(state.as_active().is_err());
+        assert!(state.as_commands().is_err());
         assert!(state.to_inactive().is_ok());
-        assert!(state.to_has_given_commands(Command::LineTo).is_err());
-        assert!(state.to_begun().is_ok());
-        assert!(state.as_begun().is_ok());
+        assert!(state.to_commands(Command::LineTo).is_err());
+        assert!(state.to_active().is_ok());
+        assert!(state.as_active().is_ok());
         assert!(state.as_inactive().is_err());
-        assert!(state.as_has_given_commands().is_err());
-        assert!(state.to_has_given_commands(Command::LineTo).is_ok());
+        assert!(state.as_commands().is_err());
+        assert!(state.to_commands(Command::LineTo).is_ok());
         assert!(state.as_inactive().is_err());
-        assert!(state.as_begun().is_err());
-        assert!(state.as_has_given_commands().is_ok());
-        let given_commands = state.as_has_given_commands().unwrap();
+        assert!(state.as_active().is_err());
+        assert!(state.as_commands().is_ok());
+        let given_commands = state.as_commands().unwrap();
         assert_eq!(
             *given_commands,
             Commands {
@@ -178,11 +178,9 @@ mod tests {
                 ..Commands::default()
             }
         );
-        assert!(state
-            .to_has_given_commands(Command::QuadraticBezier)
-            .is_ok());
-        assert!(state.as_has_given_commands().is_ok());
-        let given_commands = state.as_has_given_commands().unwrap();
+        assert!(state.to_commands(Command::QuadraticBezier).is_ok());
+        assert!(state.as_commands().is_ok());
+        let given_commands = state.as_commands().unwrap();
         assert_eq!(
             *given_commands,
             Commands {
@@ -191,7 +189,7 @@ mod tests {
                 ..Commands::default()
             }
         );
-        assert!(state.to_begun().is_err());
+        assert!(state.to_active().is_err());
         assert!(state.to_inactive().is_ok());
     }
 }
