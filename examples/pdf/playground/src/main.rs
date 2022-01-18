@@ -2,8 +2,8 @@ use graphics_state::{GraphicsState, Height, Width};
 use lyon::geom::Box2D;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
-use lyon::path::pdf::Pdf;
 use lyon::path::LineCap;
+use lyon::path::PathEvent;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::StrokeTessellator;
@@ -162,30 +162,50 @@ fn main() {
             }
             StreamObject::Fill => {
                 graphics_state.fill().unwrap();
-                let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
+                // let paths = std::mem::replace(&mut graphics_state.finished_fill_paths, vec![]);
                 let color = graphics_state
                     .properties
                     .non_stroke_color
                     .get_current_color();
                 cpu_primitives[running_prim_id].color = make_color_slice(color);
-                paths.iter().for_each(|path| {
-                    fill_tess
-                        .tessellate_path(
-                            path,
-                            &FillOptions::tolerance(tolerance)
-                                .with_fill_rule(tessellation::FillRule::NonZero),
-                            &mut BuffersBuilder::new(
-                                &mut fill_geometry,
-                                WithId(running_prim_id as u32),
-                            ),
-                        )
-                        .unwrap();
-                });
+                let paths = vec![
+                    PathEvent::Begin {
+                        at: point(10.0, 10.0),
+                    },
+                    PathEvent::Line {
+                        from: point(12.0, 12.0),
+                        to: point(10.0, 10.0),
+                    },
+                    PathEvent::Line {
+                        from: point(14.0, 12.0),
+                        to: point(10.0, 10.0),
+                    },
+                    PathEvent::Line {
+                        from: point(14.0, 14.0),
+                        to: point(10.0, 10.0),
+                    },
+                    PathEvent::End {
+                        last: point(0.0, 0.0),
+                        first: point(0.0, 0.0),
+                        close: true,
+                    }
+                ];
+                fill_tess
+                    .tessellate(
+                        paths,
+                        &FillOptions::tolerance(tolerance)
+                            .with_fill_rule(tessellation::FillRule::NonZero),
+                        &mut BuffersBuilder::new(
+                            &mut fill_geometry,
+                            WithId(running_prim_id as u32),
+                        ),
+                    )
+                    .unwrap();
                 running_prim_id += 1;
             }
             StreamObject::Stroke => {
                 graphics_state.stroke().unwrap();
-                let paths = std::mem::replace(&mut graphics_state.finished_stroke_paths, vec![]);
+                // let paths = std::mem::replace(&mut graphics_state.finished_stroke_paths, vec![]);
                 let properties = graphics_state.properties();
                 let options = StrokeOptions::tolerance(tolerance)
                     .with_line_cap(properties.line_cap)
@@ -193,18 +213,18 @@ fn main() {
                 let color = graphics_state.properties.stroke_color.get_current_color();
                 cpu_primitives[running_prim_id].color = make_color_slice(color);
                 cpu_primitives[running_prim_id].width = (*properties.line_width) / 2.0;
-                paths.iter().for_each(|path| {
-                    stroke_tess
-                        .tessellate_path(
-                            path,
-                            &options,
-                            &mut BuffersBuilder::new(
-                                &mut stroke_geometry,
-                                WithId(running_prim_id as u32),
-                            ),
-                        )
-                        .unwrap();
-                });
+                // paths.iter().for_each(|path| {
+                //     stroke_tess
+                //         .tessellate_path(
+                //             path,
+                //             &options,
+                //             &mut BuffersBuilder::new(
+                //                 &mut stroke_geometry,
+                //                 WithId(running_prim_id as u32),
+                //             ),
+                //         )
+                //         .unwrap();
+                // });
                 running_prim_id += 1;
             }
             StreamObject::LineWidth(w) => {

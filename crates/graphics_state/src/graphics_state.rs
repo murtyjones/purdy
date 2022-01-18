@@ -1,6 +1,5 @@
 use anyhow::{Ok, Result};
 use lyon::{path::builder::Build, geom::Line};
-use crate::Pdf;
 use lyon::path::{math::Vector, LineCap};
 use shared::{Color, ColorSpace, Height, LineWidth, NonStrokeColor, Rgb, StrokeColor, Width};
 use thiserror::Error;
@@ -29,8 +28,8 @@ impl Default for State {
 
 #[derive(Debug)]
 pub struct GraphicsState {
-    pub finished_fill_paths: Vec<lyon::path::Path>,
-    pub finished_stroke_paths: Vec<lyon::path::Path>,
+    // pub finished_fill_paths: Vec<lyon::path::Path>,
+    // pub finished_stroke_paths: Vec<lyon::path::Path>,
     pub properties: Properties,
     page_width: Width,
     page_height: Height,
@@ -82,38 +81,14 @@ impl Default for Text {
 #[derive(Debug)]
 struct Path {
     // ... Specific State Values
-    builder: Pdf,
+    // builder: Pdf,
 }
 
 impl Path {
     fn new(page_width: Width, page_height: Height) -> Self {
         Path {
-            builder: Pdf::new(page_width, page_height),
+            // builder: Pdf::new(page_width, page_height),
         }
-    }
-
-    fn move_to(&mut self, to: Vector) {
-        self.builder.move_to(to);
-    }
-
-    fn line_to(&mut self, to: Vector) {
-        self.builder.line_to(to);
-    }
-
-    fn rect(&mut self, low_left: Vector, width: Width, height: Height) {
-        self.builder.rect(low_left, width, height);
-    }
-
-    fn close(&mut self) {
-        self.builder.close();
-    }
-
-    fn build(self) -> lyon::path::Path {
-        self.builder.build()
-    }
-
-    fn make_fillable_if_needed(&mut self) {
-        self.builder.make_fillable_if_needed();
     }
 }
 
@@ -133,8 +108,8 @@ impl GraphicsState {
     pub fn new(page_width: Width, page_height: Height) -> Self {
         // ...
         GraphicsState {
-            finished_fill_paths: vec![],
-            finished_stroke_paths: vec![],
+            // finished_fill_paths: vec![],
+            // finished_stroke_paths: vec![],
             properties: Properties::default(),
             page_width,
             page_height,
@@ -149,44 +124,41 @@ impl GraphicsState {
 
     pub fn move_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
-        self.as_path_mut()?.move_to(to);
         Ok(())
     }
 
     pub fn line_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
-        self.as_path_mut()?.line_to(to);
         Ok(())
     }
 
     pub fn rect(&mut self, low_left: Vector, width: Width, height: Height) -> Result<()> {
         self.to_path()?;
-        self.as_path_mut()?.rect(low_left, width, height);
         Ok(())
     }
 
     pub fn fill(&mut self) -> Result<()> {
-        self.to_path()?;
-        let w = self.page_width;
-        let h = self.page_height;
-        let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
-        p.close();
-        p.make_fillable_if_needed();
-        let path = p.build();
-        self.finished_fill_paths.push(path);
-        self.to_page_description()?;
+        // self.to_path()?;
+        // let w = self.page_width;
+        // let h = self.page_height;
+        // let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
+        // p.close();
+        // p.make_fillable_if_needed();
+        // let path = p.build();
+        // self.finished_fill_paths.push(path);
+        // self.to_page_description()?;
         Ok(())
     }
 
     pub fn stroke(&mut self) -> Result<()> {
-        self.to_path()?;
-        let w = self.page_width;
-        let h = self.page_height;
-        let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
-        p.close();
-        let path = p.build();
-        self.finished_stroke_paths.push(path);
-        self.to_page_description()?;
+        // self.to_path()?;
+        // let w = self.page_width;
+        // let h = self.page_height;
+        // let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
+        // p.close();
+        // let path = p.build();
+        // self.finished_stroke_paths.push(path);
+        // self.to_page_description()?;
         Ok(())
     }
 
