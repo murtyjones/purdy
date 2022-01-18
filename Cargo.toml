@@ -1,32 +1,14 @@
 [workspace]
 members = [
-    "crates/lyon",
-    "crates/path",
-    "crates/tessellation",
-    "crates/algorithms",
-    "crates/tess2",
-    "crates/geom",
-    "crates/extra",
     "crates/pdf",
     "crates/graphics_state",
     "crates/shared",
-    "cli",
-    "wasm_test",
-    "examples/wgpu",
-    "examples/wgpu_svg",
-    "bench/tess",
-    "bench/path",
-    "bench/geom",
     "examples/pdf/playground",
 ]
 
 exclude = [
     ".vscode/*",
-    "all.sh",
-    "assets/*",
     "examples/*",
-    "bench/*",
-    "cli/*",
 ]
 
 resolver = "2"
