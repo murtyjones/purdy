@@ -1,6 +1,6 @@
 use anyhow::Error;
-use lyon_geom::{vector, Vector};
-use lyon_path::LineCap;
+use lyon::geom::{vector, Vector};
+use lyon::path::LineCap;
 use nom::{
     branch::alt,
     bytes::complete::tag,

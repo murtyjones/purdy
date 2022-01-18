@@ -69,10 +69,9 @@ pub(crate) enum Verb {
 #[derive(Clone, Default)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Path {
-    // LYON-PDF NOTE: had to make these properties public within the crate, which diverges from the original repo
-    pub(crate) points: Box<[Point]>,
-    pub(crate) verbs: Box<[Verb]>,
-    pub(crate) num_attributes: usize,
+    points: Box<[Point]>,
+    verbs: Box<[Verb]>,
+    num_attributes: usize,
 }
 
 /// A view on a `Path`.
@@ -539,7 +538,6 @@ impl Build for BuilderImpl {
 
     fn build(self) -> Path {
         self.validator.build();
-
         Path {
             points: self.points.into_boxed_slice(),
             verbs: self.verbs.into_boxed_slice(),

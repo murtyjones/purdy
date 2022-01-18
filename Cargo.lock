@@ -866,7 +866,7 @@ name = "geom_bench"
 version = "0.0.1"
 dependencies = [
  "bencher",
- "lyon",
+ "lyon 0.17.5",
 ]
 
 [[package]]
@@ -935,8 +935,8 @@ name = "graphics_state"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "lyon_geom",
- "lyon_path",
+ "approx",
+ "lyon 0.17.5 (git+https://github.com/nical/lyon)",
  "shared",
  "thiserror",
 ]
@@ -1179,18 +1179,36 @@ dependencies = [
 name = "lyon"
 version = "0.17.5"
 dependencies = [
- "lyon_algorithms",
- "lyon_extra",
+ "lyon_algorithms 0.17.7",
+ "lyon_extra 0.17.1",
  "lyon_tess2",
- "lyon_tessellation",
+ "lyon_tessellation 0.17.9",
+]
+
+[[package]]
+name = "lyon"
+version = "0.17.5"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "lyon_algorithms 0.17.7 (git+https://github.com/nical/lyon)",
+ "lyon_extra 0.17.1 (git+https://github.com/nical/lyon)",
+ "lyon_tessellation 0.17.9 (git+https://github.com/nical/lyon)",
 ]
 
 [[package]]
 name = "lyon_algorithms"
 version = "0.17.7"
 dependencies = [
- "lyon_path",
+ "lyon_path 0.17.7",
  "serde",
+]
+
+[[package]]
+name = "lyon_algorithms"
+version = "0.17.7"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "lyon_path 0.17.7 (git+https://github.com/nical/lyon)",
 ]
 
 [[package]]
@@ -1202,7 +1220,7 @@ dependencies = [
  "env_logger 0.7.1",
  "futures",
  "itertools",
- "lyon",
+ "lyon 0.17.5",
  "rand",
  "regex",
  "wgpu",
@@ -1213,7 +1231,15 @@ dependencies = [
 name = "lyon_extra"
 version = "0.17.1"
 dependencies = [
- "lyon_path",
+ "lyon_path 0.17.7",
+]
+
+[[package]]
+name = "lyon_extra"
+version = "0.17.1"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "lyon_path 0.17.7 (git+https://github.com/nical/lyon)",
 ]
 
 [[package]]
@@ -1227,20 +1253,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "lyon_geom"
+version = "0.17.5"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "arrayvec 0.7.1",
+ "euclid",
+ "num-traits",
+]
+
+[[package]]
 name = "lyon_path"
 version = "0.17.7"
 dependencies = [
  "approx",
- "lyon_geom",
+ "lyon_geom 0.17.5",
  "serde",
  "shared",
+]
+
+[[package]]
+name = "lyon_path"
+version = "0.17.7"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "lyon_geom 0.17.5 (git+https://github.com/nical/lyon)",
 ]
 
 [[package]]
 name = "lyon_tess2"
 version = "0.17.1"
 dependencies = [
- "lyon_tessellation",
+ "lyon_tessellation 0.17.9",
  "serde",
  "tess2-sys",
 ]
@@ -1249,19 +1293,26 @@ dependencies = [
 name = "lyon_tessellation"
 version = "0.17.9"
 dependencies = [
- "anyhow",
  "float_next_after",
- "lyon_extra",
- "lyon_path",
+ "lyon_extra 0.17.1",
+ "lyon_path 0.17.7",
  "serde",
- "thiserror",
+]
+
+[[package]]
+name = "lyon_tessellation"
+version = "0.17.9"
+source = "git+https://github.com/nical/lyon#699e91941ea7637a2749e639c46b30e23888299b"
+dependencies = [
+ "float_next_after",
+ "lyon_path 0.17.7 (git+https://github.com/nical/lyon)",
 ]
 
 [[package]]
 name = "lyon_wasm_test"
 version = "0.11.0"
 dependencies = [
- "lyon",
+ "lyon 0.17.5",
 ]
 
 [[package]]
@@ -1683,7 +1734,7 @@ name = "path_bench"
 version = "0.0.1"
 dependencies = [
  "bencher",
- "lyon",
+ "lyon 0.17.5",
 ]
 
 [[package]]
@@ -1693,8 +1744,7 @@ dependencies = [
  "anyhow",
  "encoding",
  "linked-hash-map",
- "lyon_geom",
- "lyon_path",
+ "lyon 0.17.5 (git+https://github.com/nical/lyon)",
  "maplit",
  "nom",
  "num",
@@ -1744,7 +1794,7 @@ dependencies = [
  "futures",
  "graphics_state",
  "image",
- "lyon",
+ "lyon 0.17.5 (git+https://github.com/nical/lyon)",
  "pdf",
  "png",
  "shared",
@@ -2251,7 +2301,7 @@ dependencies = [
  "clap",
  "env_logger 0.9.0",
  "futures",
- "lyon",
+ "lyon 0.17.5",
  "usvg",
  "wgpu",
  "winit",
@@ -2307,7 +2357,7 @@ name = "tess_bench"
 version = "0.0.1"
 dependencies = [
  "bencher",
- "lyon",
+ "lyon 0.17.5",
  "tess2-sys",
 ]
 
@@ -2689,7 +2739,7 @@ dependencies = [
  "bytemuck",
  "env_logger 0.9.0",
  "futures",
- "lyon",
+ "lyon 0.17.5",
  "wgpu",
  "winit",
 ]

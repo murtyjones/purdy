@@ -11,8 +11,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 linked-hash-map = "^0.5"
 maplit = "1.0.2"
-lyon_geom = { path = "../geom" }
-lyon_path = { path = "../path" }
+lyon = { git = "https://github.com/nical/lyon", features = ["extra"] }
 shared = { path = "../shared" }
 anyhow = "1.0.52"
 encoding = "^0.2"

@@ -6,8 +6,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lyon_geom = { path = "../geom" }
-lyon_path = { path = "../path" }
+lyon = { git = "https://github.com/nical/lyon", features = ["extra"] }
 shared = { path = "../shared" }
 anyhow = "1.0.52"
 thiserror = "1.0.30"
+
+[dev-dependencies]
+approx = "0.5.0"

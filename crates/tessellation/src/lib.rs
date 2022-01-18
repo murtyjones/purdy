@@ -190,7 +190,6 @@ use lyon_extra as extra;
 pub extern crate serde;
 
 mod basic_shapes;
-mod draw_state;
 mod event_queue;
 mod fill;
 pub mod geometry_builder;

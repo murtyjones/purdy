@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
-use lyon_path::builder::Build;
-use lyon_path::pdf::Pdf;
-use lyon_path::{math::Vector, LineCap};
+use lyon::{path::builder::Build, geom::Line};
+use crate::Pdf;
+use lyon::path::{math::Vector, LineCap};
 use shared::{Color, ColorSpace, Height, LineWidth, NonStrokeColor, Rgb, StrokeColor, Width};
 use thiserror::Error;
 
@@ -29,8 +29,8 @@ impl Default for State {
 
 #[derive(Debug)]
 pub struct GraphicsState {
-    pub finished_fill_paths: Vec<lyon_path::Path>,
-    pub finished_stroke_paths: Vec<lyon_path::Path>,
+    pub finished_fill_paths: Vec<lyon::path::Path>,
+    pub finished_stroke_paths: Vec<lyon::path::Path>,
     pub properties: Properties,
     page_width: Width,
     page_height: Height,
@@ -50,7 +50,7 @@ impl Default for Properties {
     fn default() -> Self {
         Properties {
             line_width: LineWidth::default(),
-            line_cap: LineCap::default(),
+            line_cap: LineCap::Square,
             stroke_color: StrokeColor::default(),
             non_stroke_color: NonStrokeColor::default(),
         }
@@ -108,7 +108,7 @@ impl Path {
         self.builder.close();
     }
 
-    fn build(self) -> lyon_path::Path {
+    fn build(self) -> lyon::path::Path {
         self.builder.build()
     }
 
@@ -220,7 +220,7 @@ impl GraphicsState {
 
     pub fn set_cap_style(&mut self, c: LineCap) -> Result<()> {
         self.to_page_description()?;
-        self.properties.line_cap.set(c);
+        self.properties.line_cap = c;
         Ok(())
     }
 
