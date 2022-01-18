@@ -335,8 +335,8 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
 mod test {
     use super::stream_objects;
     use crate::stream::{Rgb, StreamObject, TextContent};
-    use lyon_geom::vector;
-    use lyon_path::LineCap;
+    use lyon::geom::vector;
+    use lyon::path::LineCap;
 
     #[test]
     fn test_text_stream() {
