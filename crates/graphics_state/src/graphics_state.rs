@@ -28,8 +28,6 @@ impl Default for State {
 
 #[derive(Debug)]
 pub struct GraphicsState {
-    // pub finished_fill_paths: Vec<lyon::path::Path>,
-    // pub finished_stroke_paths: Vec<lyon::path::Path>,
     pub properties: Properties,
     page_width: Width,
     page_height: Height,
@@ -81,14 +79,11 @@ impl Default for Text {
 #[derive(Debug)]
 struct Path {
     // ... Specific State Values
-    // builder: Pdf,
 }
 
 impl Path {
     fn new(page_width: Width, page_height: Height) -> Self {
-        Path {
-            // builder: Pdf::new(page_width, page_height),
-        }
+        Path {}
     }
 }
 
@@ -106,10 +101,7 @@ impl Default for ClippingPath {
 // Raft starts in the Path state
 impl GraphicsState {
     pub fn new(page_width: Width, page_height: Height) -> Self {
-        // ...
         GraphicsState {
-            // finished_fill_paths: vec![],
-            // finished_stroke_paths: vec![],
             properties: Properties::default(),
             page_width,
             page_height,
@@ -124,21 +116,24 @@ impl GraphicsState {
 
     pub fn move_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
+        // TODO: Implement
         Ok(())
     }
 
     pub fn line_to(&mut self, to: Vector) -> Result<()> {
         self.to_path()?;
+        // TODO: Implement
         Ok(())
     }
 
     pub fn rect(&mut self, low_left: Vector, width: Width, height: Height) -> Result<()> {
         self.to_path()?;
+        // TODO: Implement
         Ok(())
     }
 
     pub fn fill(&mut self) -> Result<()> {
-        // self.to_path()?;
+        self.to_path()?;
         // let w = self.page_width;
         // let h = self.page_height;
         // let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
@@ -151,7 +146,7 @@ impl GraphicsState {
     }
 
     pub fn stroke(&mut self) -> Result<()> {
-        // self.to_path()?;
+        self.to_path()?;
         // let w = self.page_width;
         // let h = self.page_height;
         // let mut p = std::mem::replace(self.as_path_mut()?, Path::new(w, h));
