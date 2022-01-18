@@ -169,26 +169,11 @@ fn main() {
                     .get_current_color();
                 cpu_primitives[running_prim_id].color = make_color_slice(color);
                 let paths = vec![
-                    PathEvent::Begin {
-                        at: point(10.0, 10.0),
-                    },
-                    PathEvent::Line {
-                        from: point(12.0, 12.0),
-                        to: point(10.0, 10.0),
-                    },
-                    PathEvent::Line {
-                        from: point(14.0, 12.0),
-                        to: point(10.0, 10.0),
-                    },
-                    PathEvent::Line {
-                        from: point(14.0, 14.0),
-                        to: point(10.0, 10.0),
-                    },
-                    PathEvent::End {
-                        last: point(0.0, 0.0),
-                        first: point(0.0, 0.0),
-                        close: true,
-                    }
+                    PathEvent::Begin { at: point(-294.64645, 385.35355) },
+                    PathEvent::Line { from: point(-294.64645, 385.35355), to: point(-295.35355, 384.64645) },
+                    PathEvent::Line { from: point(-295.35355, 384.64645), to: point(-296.35355, 385.64645) },
+                    PathEvent::Line { from: point(-296.35355, 385.64645), to: point(-295.64645, 386.35355) },
+                    PathEvent::End { last: point(-295.64645, 386.35355), first: point(-294.64645, 385.35355), close: true }
                 ];
                 fill_tess
                     .tessellate(
