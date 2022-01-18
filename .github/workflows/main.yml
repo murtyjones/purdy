@@ -32,27 +32,3 @@ jobs:
         with:
           command: test
           args: --all --verbose --all-features
-
-  wasm:
-    env:
-        RUST_BACKTRACE: 1
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          target: "wasm32-unknown-unknown"
-      - uses: Swatinem/rust-cache@v1
-
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 10.5
-
-      - name: Compile and test wasm
-        run: cd wasm_test && cargo +nightly build --target wasm32-unknown-unknown && node test.js
