@@ -192,7 +192,6 @@ impl Pdf {
 
         id
     }
-
     /// For any single linetos ending with a fill, makes them rectangles that can be filled
     pub fn make_fillable_if_needed(&mut self) {
         let mut points = self.points.iter().enumerate();
@@ -229,17 +228,22 @@ impl Pdf {
                 // for our point iterator to work properly and not get ahead of itself
                 let (i, from) = maybe_from.unwrap();
                 let (j, to) = points.next().unwrap();
-                if from == to {
-                    continue;
-                }
+                let from = *from;
+                let to = *to;
+                // Ensure that the line will be visible even if it's only a dot:
+                let absolute_change = (self.current_position - to).abs();
+                let minimum_distance = vector(0.6, 0.6);
+                let to = if absolute_change.x < minimum_distance.x
+                    && absolute_change.y < minimum_distance.y
+                {
+                    point(self.current_position.x + minimum_distance.x, to.y)
+                } else {
+                    to
+                };
                 skip_next_n_windows += 2;
                 lineto_insertions.push(first_item_index + 2);
                 lineto_insertions.push(first_item_index + 2);
-                // If the line isn't even visible, no need to make it fillable
-                let line = LineSegment {
-                    from: *from,
-                    to: *to,
-                };
+                let line = LineSegment { from, to };
                 let rect_points = line.as_rect();
                 point_replacements.push((i, rect_points[0]));
                 point_replacements.push((j, rect_points[1]));
