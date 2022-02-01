@@ -12,7 +12,7 @@ For this we rely on [lyon](https://github.com/nical/lyon) to tesselate paths whi
 
 ## How to run Purdy
 
-Most of the work on purdy is being done through `examples/playground/src/main.rs`. As concepts are solidified there, they are then moved over to the core library in `crates`.
+Most of the work on Purdy is being done through `examples/playground/src/main.rs`. As concepts are solidified there, they are then moved over to the core library in `crates`.
 
 `examples/playground` attempts to render `pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf`, which has some text on pages one and two, and has some shapes on page 2. Right now, only the shapes are rendered.
 
