@@ -1,0 +1,22 @@
+[package]
+name = "pdf"
+version = "0.1.0"
+authors = ["Marty Jones <murtin.jones@gmail.com>"]
+edition = "2018"
+resolver = "2"
+
+[dependencies]
+nom = "6.1.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+linked-hash-map = "^0.5"
+maplit = "1.0.2"
+lyon = { git = "https://github.com/nical/lyon", features = ["extra"] }
+shared = { path = "../shared" }
+anyhow = "1.0.52"
+encoding = "^0.2"
+thiserror = "1.0.30"
+strum = "0.23.0"
+strum_macros = "0.23"
+num = "0.4.0"
+approx = "0.5.0"

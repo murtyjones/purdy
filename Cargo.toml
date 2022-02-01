@@ -1,0 +1,22 @@
+[workspace]
+members = [
+    "crates/graphics_state",
+    "crates/shared",
+    "crates/pdf",
+    "examples/pdf/playground",
+]
+
+exclude = [
+    ".vscode/*",
+    "all.sh",
+    "assets/*",
+    "examples/*",
+    "bench/*",
+    "cli/*",
+]
+
+resolver = "2"
+
+# Uncomment this when profiling.
+#[profile.release]
+#debug = true
