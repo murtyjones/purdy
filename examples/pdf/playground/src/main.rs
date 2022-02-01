@@ -22,7 +22,7 @@ use std::num::NonZeroU32;
 
 const PRIM_BUFFER_LEN: usize = 256;
 
-const OUTPUT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/line.png");
+const OUTPUT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/img/page-2.png");
 
 #[repr(C)]
 #[derive(Copy, Clone)]
