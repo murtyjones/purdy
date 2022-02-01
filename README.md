@@ -21,3 +21,7 @@ To run Purdy, clone this repo and run `make eg1` from the repo root. Once the pr
 ## Contributing
 
 PDF rendering is a massive undertaking, so contributors are welcome! There are no contributing guidelines so your best bet is to open an issue if you're trying to figure out where to start.
+
+## Inspiration
+
+Purdy draws heavily on [lopdf](https://github.com/J-F-Liu/lopdf) concepts for PDF parsing.
