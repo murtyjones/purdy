@@ -9,10 +9,10 @@ version = "0.1.0"
 [dependencies]
 bytemuck = "1.7.3"
 futures = "0.3.19"
-graphics_state = {path = "../../../crates/graphics_state"}
+graphics_state = {path = "../../crates/graphics_state"}
 image = "0.23"
 lyon = { git = "https://github.com/nical/lyon", features = ["extra"] }
-pdf = {path = "../../../crates/pdf"}
-shared = {path = "../../../crates/shared"}
+pdf = {path = "../../crates/pdf"}
+shared = {path = "../../crates/shared"}
 png = "0.16"
 wgpu = "0.11.1"
