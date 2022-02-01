@@ -16,7 +16,7 @@ Most of the work on purdy is being done through `examples/playground/src/main.rs
 
 `examples/playground` attempts to render `pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf`, which has some text on pages one and two, and has some shapes on page 2. Right now, only the shapes are rendered.
 
-To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output.
+To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output (actually, `page-2.png` is committed to source control so you don't to have to run anything to see it unless you're actively making changes to the library).
 
 ## Contributing
 
