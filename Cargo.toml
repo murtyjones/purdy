@@ -3,7 +3,7 @@ members = [
     "crates/graphics_state",
     "crates/shared",
     "crates/pdf",
-    "examples/pdf/playground",
+    "examples/playground",
 ]
 
 exclude = [
