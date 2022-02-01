@@ -25,3 +25,7 @@ PDF rendering is a massive undertaking, so contributors are welcome! There are n
 ## Inspiration
 
 Purdy draws heavily on [lopdf](https://github.com/J-F-Liu/lopdf) concepts for PDF parsing.
+
+## PDF Rendering Complexity
+
+To understand some of the unique challenges in PDF rendering, [this video](https://www.youtube.com/watch?v=TiqDqd-1pwU) is a good starting point.
