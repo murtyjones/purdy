@@ -1,6 +1,5 @@
 use graphics_state::{GraphicsState, Height, Width};
 use lyon::geom::Box2D;
-use lyon::lyon_algorithms::walk::PathWalker;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
 
@@ -12,6 +11,7 @@ use lyon::tessellation::{FillOptions, FillTessellator};
 use pdf::utils::read_file_bytes;
 use pdf::{Pdf as PdfDocument, StreamObject};
 use shared::{Color, ColorSpaceWithColor};
+use lyon::algorithms::path::math::Point;
 use std::io::Write;
 
 // For create_buffer_init()
@@ -95,37 +95,6 @@ unsafe impl bytemuck::Zeroable for BgPoint {}
 const DEFAULT_WINDOW_WIDTH: f32 = 612.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 792.0;
 
-// WithId determines which primitive to use for a geometry
-// so we need to call tessellate_path for each stroke or fill with a distinct color
-// and each of those must have a primitive index
-
-// stick with 256 slots for now
-// start i = 0
-// with each fill/stroke command, store in cpu primitive, tesselate, and bump index
-
-use lyon::algorithms::path::iterator::*;
-use lyon::algorithms::path::math::Point;
-use lyon::algorithms::path::PathSlice;
-use lyon::algorithms::walk::{walk_along_path, RegularPattern, WalkerEvent};
-
-fn dots_along_path<I>(path: I, dots: &mut Vec<Point>)
-where
-    I: IntoIterator<Item = PathEvent>,
-{
-    let mut pattern = RegularPattern {
-        callback: &mut |event: WalkerEvent| {
-            dots.push(event.position);
-            true // Return true to continue walking the path.
-        },
-        // Invoke the callback above at a regular interval of 3 units.
-        interval: 5.0,
-    };
-
-    let tolerance = 0.01; // The path flattening tolerance.
-    let start_offset = 0.0; // Start walking at the beginning of the path.
-    walk_along_path(path, start_offset, &mut pattern);
-}
-
 fn main() {
     // Number of samples for anti-aliasing
     let pdf = {
@@ -171,34 +140,13 @@ fn main() {
     let mut graphics_state = GraphicsState::new(width, height);
     let paths = vec![
         PathEvent::Begin { at: point(20.0, 20.0) },
-        PathEvent::Line { from: point(20.0, 20.0), to: point(20.0, 40.0) },
-        PathEvent::End { first: point(20.0, 20.0), last: point(20.0, 40.0), close: false },
+        PathEvent::Line { from: point(20.0, 20.0), to: point(20.0, 30.0) },
+        PathEvent::End { first: point(20.0, 20.0), last: point(20.0, 30.0), close: false },
+    
+        PathEvent::Begin { at: point(20.0, 40.0) },
+        PathEvent::Line { from: point(20.0, 40.0), to: point(20.0, 50.0) },
+        PathEvent::End { first: point(20.0, 40.0), last: point(20.0, 50.0), close: false }
     ];
-    let mut dots = vec![];
-    dots_along_path(paths, &mut dots);
-    println!("{:?}", dots);
-    let mut paths = vec![];
-    use std::convert::TryInto;
-    paths.push(PathEvent::Begin { at: point(20.0, 20.0) });
-    paths.push(PathEvent::Line { from: point(20.0, 20.0), to: point(20.0, 30.0) });
-    paths.push(PathEvent::End { first: point(20.0, 20.0), last: point(20.0, 30.0), close: false });
-
-    paths.push(PathEvent::Begin { at: point(20.0, 40.0) });
-    paths.push(PathEvent::Line { from: point(20.0, 40.0), to: point(20.0, 50.0) });
-    paths.push(PathEvent::End { first: point(20.0, 40.0), last: point(20.0, 50.0), close: false });
-    // dots.windows(2).enumerate().for_each(|(i, window)| {
-    //     let [from, to]: [Point; 2] = window.try_into().unwrap();
-    //     if i % 2 == 1 {
-    //         return;
-    //     }
-    //     paths.push(PathEvent::Line { from, to });
-    // });
-    // paths.push(PathEvent::End { first: point(20.0, 20.0), last: point(20.0, 35.0), close: false });
-    println!("{:?}", paths);
-    // dots.into_iter().for_each(|(from, to)| {
-    //     paths.push(PathEvent::Line { from, to: from + to });
-    // });
-    // paths.push(PathEvent::End { first: point(20.0, 20.0), last: point(22.0, 20.0), close: true });
     stroke_tess
         .tessellate(
             paths,
