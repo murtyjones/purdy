@@ -210,10 +210,11 @@ S
 65 15 l
 S
 2 w
-[10 5] 0 d 
+[0 5] 0 d 
 85 15 m
-85 100 l
-S
+105 30 l
+115 17 l
+s
 endstream
 endobj
 
