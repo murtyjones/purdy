@@ -18,6 +18,18 @@ Most of the work on Purdy is being done through `examples/playground/src/main.rs
 
 To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output (actually, `page-2.png` is committed to source control so you don't to have to run anything to see it unless you're actively making changes to the library).
 
+## Current Rendering Ability
+
+[Reference file](./pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf)
+
+## Page 1:
+
+TODO
+
+## Page 2:
+
+![Page 2 of the sample PDF](./examples/playground/img/page-2.png)
+
 ## Contributing
 
 PDF rendering is a massive undertaking, so contributors are welcome! There are no contributing guidelines so your best bet is to open an issue if you're trying to figure out where to start.
