@@ -18,7 +18,7 @@ Most of the work on Purdy is being done through `examples/playground/src/main.rs
 
 To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output (actually, `page-2.png` is committed to source control so you don't to have to run anything to see it unless you're actively making changes to the library).
 
-## Current Rendering Ability
+## Current Status
 
 [Reference file](./pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf)
 
