@@ -145,10 +145,10 @@ impl GraphicsState {
         Ok(paths)
     }
 
-    pub fn stroke(&mut self) -> Result<Vec<PathEvent>> {
+    pub fn stroke(&mut self, close: bool) -> Result<Vec<PathEvent>> {
         self.path()?;
         let mut path = self.take_path()?;
-        path.close()?;
+        path.end(close)?;
         let paths = path.build()?;
         self.page_description()?;
         Ok(paths)

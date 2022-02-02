@@ -41,7 +41,7 @@ pub enum StreamObject<'a> {
     MoveTo(Vector<f32>),
     LineTo(Vector<f32>),
     Rect(Vector<f32>, Width, Height),
-    Stroke,
+    Stroke(bool),
     Fill,
     LineWidth(LineWidth),
     NonStrokeColor(Vec<f32>),

@@ -194,7 +194,7 @@ fn main() {
                     .unwrap();
                 running_prim_id += 1;
             }
-            StreamObject::Stroke => {
+            StreamObject::Stroke(close) => {
                 let properties = graphics_state.properties();
                 let options = StrokeOptions::tolerance(tolerance)
                     .with_line_cap(properties.line_cap)
@@ -202,7 +202,7 @@ fn main() {
                 let color = graphics_state.properties.stroke_color.get_current_color();
                 cpu_primitives[running_prim_id].color = make_color_slice(color);
                 cpu_primitives[running_prim_id].width = (*properties.line_width) / 2.0;
-                let paths = graphics_state.stroke().unwrap();
+                let paths = graphics_state.stroke(close).unwrap();
                 stroke_tess
                     .tessellate(
                         paths,

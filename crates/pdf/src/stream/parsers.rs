@@ -240,8 +240,22 @@ fn test_rect() {
     );
 }
 
-fn stroke(input: &[u8]) -> NomResult<()> {
-    map(ws(char('S')), |_| ())(input)
+fn stroke(input: &[u8]) -> NomResult<bool> {
+    map(
+        alt((
+            ws(char('S')),
+            ws(char('s'))
+        )),
+        |s| {
+            s == 's'
+        }
+    )(input)
+}
+
+#[test]
+fn test_stroke() {
+    assert_eq!(stroke(" s ".as_bytes()).unwrap().1, true);
+    assert_eq!(stroke("S".as_bytes()).unwrap().1, false);
 }
 
 fn fill(input: &[u8]) -> NomResult<()> {
@@ -346,7 +360,7 @@ pub fn stream_objects(input: &[u8]) -> NomResult<Vec<StreamObject<'_>>> {
         map(rect, |(low_left, width, height)| {
             StreamObject::Rect(low_left, width, height)
         }),
-        map(stroke, |_| StreamObject::Stroke),
+        map(stroke, StreamObject::Stroke),
         map(fill, |_| StreamObject::Fill),
         map(line_width, StreamObject::LineWidth),
         map(set_non_stroke, StreamObject::NonStrokeColor),
