@@ -20,7 +20,7 @@ To run Purdy, clone this repo and run `make eg1` from the repo root. Once the pr
 
 ## Current Status
 
-[Reference file](./pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf)
+[Reference file](https://github.com/murtyjones/purdy/raw/master/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf)
 
 ## Page 1:
 
