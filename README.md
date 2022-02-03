@@ -10,17 +10,7 @@ The current focus is to enable PDF graphics commands (drawing lines, shapes, etc
 
 For this we rely on [lyon](https://github.com/nical/lyon) to tesselate paths which are then fed to `wgpu` for rendering.
 
-## How to run Purdy
-
-Most of the work on Purdy is being done through `examples/playground/src/main.rs`. As concepts are solidified there, they are then moved over to the core library in `crates`.
-
-`examples/playground` attempts to render `pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf`, which has some text on pages one and two, and has some shapes on page 2. Right now, only the shapes are rendered.
-
-To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output (actually, `page-2.png` is committed to source control so you don't to have to run anything to see it unless you're actively making changes to the library).
-
-## Current Status
-
-[Reference file](https://github.com/murtyjones/purdy/raw/master/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf)
+Here's an example of how Purdy renders the [PDF](https://github.com/murtyjones/purdy/raw/master/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf) under active development:
 
 ## Page 1:
 
@@ -29,6 +19,14 @@ TODO
 ## Page 2:
 
 ![Page 2 of the sample PDF](./examples/playground/img/page-2.png)
+
+## How to run Purdy
+
+Most of the work on Purdy is being done through `examples/playground/src/main.rs`. As concepts are solidified there, they are then moved over to the core library in `crates`.
+
+`examples/playground` attempts to render `pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf`, which has some text on pages one and two, and has some shapes on page 2. Right now, only the shapes are rendered.
+
+To run Purdy, clone this repo and run `make eg1` from the repo root. Once the program has finished, you can open `examples/playground/img/page-2.png` to see the output (actually, `page-2.png` is committed to source control so you don't to have to run anything to see it unless you're actively making changes to the library).
 
 ## Contributing
 
