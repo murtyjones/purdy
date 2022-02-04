@@ -28,6 +28,6 @@ pub enum XrefError {
 pub enum ParseError {
     #[error("Cap style should be 0, 1, 2 but was {0}")]
     InvalidCapStyle(i32),
-    #[error("Found leftover content in stream")]
-    FailedToParseAllStreamContent,
+    #[error("Found leftover content in stream. leftover content: ({0})")]
+    FailedToParseAllStreamContent(String),
 }

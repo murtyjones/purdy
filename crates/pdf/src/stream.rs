@@ -55,7 +55,7 @@ impl<'a> Stream<'a> {
     pub fn get_content(&self) -> Result<Vec<StreamObject<'a>>> {
         let (rest, content) = stream_objects(self.content)?;
         if !rest.is_empty() {
-            return Err(ParseError::FailedToParseAllStreamContent.into());
+            return Err(ParseError::FailedToParseAllStreamContent(String::from_utf8_lossy(rest).to_string()).into());
         }
         Ok(content)
     }
