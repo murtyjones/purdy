@@ -60,3 +60,21 @@ impl<'a> Stream<'a> {
         Ok(content)
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use crate::{document::Document, utils::{extend_lifetime, read_file_bytes}};
+
+    #[test]
+    fn test_sample_pdf_no_xref_objects() {
+        let bytes = read_file_bytes(concat!(
+            env!("CARGO_WORKSPACE_DIR"),
+            "/pdfs/sample-no-xref-entries/sample-no-xref-entries.pdf"
+        ));
+        let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
+        let pdf = Document::from_bytes(bytes).expect("could not parse sample");
+        assert!(pdf.get_object((5, 0)).unwrap().as_stream().unwrap().get_content().is_ok());
+        assert!(pdf.get_object((11, 0)).unwrap().as_stream().unwrap().get_content().is_ok());
+    }
+}
