@@ -33,3 +33,9 @@ jobs:
         with:
           command: test
           args: --all --verbose --all-features
+
+      - name: Example 1
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -p playground --verbos
