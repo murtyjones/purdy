@@ -626,13 +626,13 @@ fn main() {
 
     queue.submit(Some(encoder.finish()));
 
-    block_on(write_to_disk(
-        OUTPUT,
-        device,
-        buffer_dimensions,
-        output_buffer,
-    ))
-    .unwrap();
+    // block_on(write_to_disk(
+    //     OUTPUT,
+    //     device,
+    //     buffer_dimensions,
+    //     output_buffer,
+    // ))
+    // .unwrap();
 }
 
 /// This vertex constructor forwards the positions and normals provided by the
