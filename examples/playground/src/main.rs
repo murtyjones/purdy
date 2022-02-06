@@ -138,27 +138,6 @@ fn main() {
     let width = Width::new(DEFAULT_WINDOW_WIDTH);
     let height = Height::new(DEFAULT_WINDOW_HEIGHT);
     let mut graphics_state = GraphicsState::new(width, height);
-    let paths = vec![
-        PathEvent::Begin { at: point(20.0, 20.0) },
-        PathEvent::Line { from: point(20.0, 20.0), to: point(20.0, 30.0) },
-        PathEvent::End { first: point(20.0, 20.0), last: point(20.0, 30.0), close: false },
-    
-        PathEvent::Begin { at: point(20.0, 40.0) },
-        PathEvent::Line { from: point(20.0, 40.0), to: point(20.0, 50.0) },
-        PathEvent::End { first: point(20.0, 40.0), last: point(20.0, 50.0), close: false }
-    ];
-    stroke_tess
-        .tessellate(
-            paths,
-            &StrokeOptions::tolerance(tolerance),
-            &mut BuffersBuilder::new(
-                &mut stroke_geometry,
-                WithId(running_prim_id as u32),
-            ),
-        )
-        .unwrap();
-        cpu_primitives[running_prim_id].width = 0.5;
-        running_prim_id += 1;
     for inst in draw_instructions {
         match inst {
             StreamObject::Text(_) => unimplemented!(),
