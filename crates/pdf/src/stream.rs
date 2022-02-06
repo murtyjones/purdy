@@ -55,16 +55,21 @@ impl<'a> Stream<'a> {
     pub fn get_content(&self) -> Result<Vec<StreamObject<'a>>> {
         let (rest, content) = stream_objects(self.content)?;
         if !rest.is_empty() {
-            return Err(ParseError::FailedToParseAllStreamContent(String::from_utf8_lossy(rest).to_string()).into());
+            return Err(ParseError::FailedToParseAllStreamContent(
+                String::from_utf8_lossy(rest).to_string(),
+            )
+            .into());
         }
         Ok(content)
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::{document::Document, utils::{extend_lifetime, read_file_bytes}};
+    use crate::{
+        document::Document,
+        utils::{extend_lifetime, read_file_bytes},
+    };
 
     #[test]
     fn test_sample_pdf_no_xref_objects() {
@@ -74,7 +79,19 @@ mod test {
         ));
         let bytes: &[u8] = unsafe { extend_lifetime(&bytes) };
         let pdf = Document::from_bytes(bytes).expect("could not parse sample");
-        assert!(pdf.get_object((5, 0)).unwrap().as_stream().unwrap().get_content().is_ok());
-        assert!(pdf.get_object((11, 0)).unwrap().as_stream().unwrap().get_content().is_ok());
+        assert!(pdf
+            .get_object((5, 0))
+            .unwrap()
+            .as_stream()
+            .unwrap()
+            .get_content()
+            .is_ok());
+        assert!(pdf
+            .get_object((11, 0))
+            .unwrap()
+            .as_stream()
+            .unwrap()
+            .get_content()
+            .is_ok());
     }
 }

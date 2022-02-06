@@ -3,6 +3,7 @@ use lyon::geom::Box2D;
 use lyon::lyon_tessellation::StrokeOptions;
 use lyon::math::*;
 
+use lyon::algorithms::path::math::Point;
 use lyon::path::PathEvent;
 use lyon::tessellation;
 use lyon::tessellation::geometry_builder::*;
@@ -12,7 +13,6 @@ use pdf::utils::read_file_bytes;
 use pdf::{Pdf as PdfDocument, StreamObject};
 use shared::DashPattern;
 use shared::{Color, ColorSpaceWithColor};
-use lyon::algorithms::path::math::Point;
 use std::io::Write;
 
 // For create_buffer_init()
@@ -185,15 +185,19 @@ fn main() {
                 pub trait MaybeDashed {
                     fn maybe_dashed(self, d: &DashPattern) -> Vec<PathEvent>;
                 }
-                
+
                 impl MaybeDashed for std::vec::IntoIter<PathEvent> {
                     fn maybe_dashed(self, d: &DashPattern) -> Vec<PathEvent> {
                         // TODO: implement dashing
-                        self.collect::<Vec<PathEvent>>() 
+                        self.collect::<Vec<PathEvent>>()
                     }
                 }
-                
-                let paths = graphics_state.stroke(close).unwrap().into_iter().maybe_dashed(&graphics_state.properties.dash_pattern);
+
+                let paths = graphics_state
+                    .stroke(close)
+                    .unwrap()
+                    .into_iter()
+                    .maybe_dashed(&graphics_state.properties.dash_pattern);
 
                 stroke_tess
                     .tessellate(

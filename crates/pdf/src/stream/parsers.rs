@@ -241,15 +241,7 @@ fn test_rect() {
 }
 
 fn stroke(input: &[u8]) -> NomResult<bool> {
-    map(
-        alt((
-            ws(char('S')),
-            ws(char('s'))
-        )),
-        |s| {
-            s == 's'
-        }
-    )(input)
+    map(alt((ws(char('S')), ws(char('s')))), |s| s == 's')(input)
 }
 
 #[test]
