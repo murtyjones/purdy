@@ -188,8 +188,30 @@ fn main() {
 
                 impl MaybeDashed for std::vec::IntoIter<PathEvent> {
                     fn maybe_dashed(self, d: &DashPattern) -> Vec<PathEvent> {
-                        // TODO: implement dashing
-                        self.collect::<Vec<PathEvent>>()
+                        if *d == DashPattern::default() {
+                            return self.collect::<Vec<PathEvent>>();
+                        }
+                        // DashPattern { array: [0.0, 5.0], phase: 0.0 }
+                        // IntoIter([Begin { at: (-221.0, 381.0) }, Line { from: (-221.0, 381.0), to: (-201.0, 366.0) }, Line { from: (-221.0, 381.0), to: (-191.0, 379.0) }, End { last: (-221.0, 381.0), first: (-221.0, 381.0), close: true }])
+                        let mut result = vec![];
+                        let mut i = d.iter();
+                        let dash_length = *i.next().unwrap();
+                        let dash_length = if dash_length < 1.0 { 1.0 } else { dash_length };
+                        let gap_length = *i.next().unwrap();
+                        let gap_length = if gap_length < 1.0 { 1.0 } else { gap_length };
+                        let begin = self.next().unwrap();
+                        let mut next = self.next();
+                        while let Some(n) = next {
+                            match n {
+                                PathEvent::Line { from, to } => {
+                                }
+                                PathEvent::Cubic { .. } => unimplemented!(),
+                                PathEvent::Quadratic { .. } => unimplemented!(),
+                                PathEvent::End { .. } => unimplemented!(),
+                            };
+                            next = self.next();
+                        }
+                        panic!("{:?}", self);
                     }
                 }
 
