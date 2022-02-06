@@ -187,7 +187,10 @@ fn main() {
                 }
                 
                 impl MaybeDashed for std::vec::IntoIter<PathEvent> {
-                    fn maybe_dashed(self, d: &DashPattern) -> Vec<PathEvent> { self.collect::<Vec<PathEvent>>() }
+                    fn maybe_dashed(self, d: &DashPattern) -> Vec<PathEvent> {
+                        // TODO: implement dashing
+                        self.collect::<Vec<PathEvent>>() 
+                    }
                 }
                 
                 let paths = graphics_state.stroke(close).unwrap().into_iter().maybe_dashed(&graphics_state.properties.dash_pattern);
